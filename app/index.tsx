@@ -28,9 +28,13 @@ export default function Index() {
   }
 
   // Redirect based on auth state
+  console.log('Index: Redirecting...', { user: user ? 'exists' : 'null' });
+  
   if (user) {
+    console.log('Index: Redirecting to tabs');
     return <Redirect href="/(tabs)" />;
   } else {
+    console.log('Index: Redirecting to login');
     return <Redirect href="/(auth)/login" />;
   }
 }

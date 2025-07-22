@@ -214,8 +214,8 @@ BEGIN
     NEW.id,
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'name', 'New User'),
-    'viewer',
-    (SELECT id FROM locations LIMIT 1)
+    COALESCE(NEW.raw_user_meta_data->>'role', 'viewer'),
+    COALESCE(NEW.raw_user_meta_data->>'location_id', (SELECT id FROM locations LIMIT 1))
   );
   RETURN NEW;
 END;

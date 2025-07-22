@@ -36,15 +36,32 @@ export const [AuthContext, useAuth] = createContextHook(() => {
   }, []);
 
   const loadUserProfile = async (supabaseUser: SupabaseUser) => {
+    console.log('Loading profile for user:', supabaseUser.id);
+    
+    // Add timeout to prevent infinite loading
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Profile loading timeout')), 5000)
+    );
+    
     try {
-      const { data: profile, error } = await supabase
+      const profilePromise = supabase
         .from('users')
         .select('*')
         .eq('id', supabaseUser.id)
         .single();
 
+      const { data: profile, error } = await Promise.race([
+        profilePromise,
+        timeoutPromise
+      ]) as any;
+
+      console.log('Profile query result:', { profile, error });
+
       if (error) {
         console.error('Error loading user profile:', error);
+        // If no profile exists, set initialized anyway to unblock the app
+        console.log('No profile found, but setting initialized to true');
+        setUser(null);
         setInitialized(true);
         return;
       }
@@ -58,12 +75,18 @@ export const [AuthContext, useAuth] = createContextHook(() => {
           locationId: profile.location_id,
           avatar: profile.avatar,
           createdAt: profile.created_at,
+          updatedAt: profile.updated_at,
         };
+        console.log('Setting user profile:', userProfile);
         setUser(userProfile);
       }
     } catch (error) {
-      console.error('Failed to load user profile:', error);
+      console.error('Failed to load user profile (timeout or error):', error);
+      // Force initialization to unblock the app
+      setUser(null);
+      setInitialized(true);
     } finally {
+      console.log('Setting initialized to true');
       setInitialized(true);
     }
   };
@@ -85,6 +108,66 @@ export const [AuthContext, useAuth] = createContextHook(() => {
     } catch (error) {
       console.error('Sign in error:', error);
       return { success: false, error: 'Authentication failed' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signUp = async (email: string, password: string, name: string, role: UserRole = 'viewer', locationId?: string) => {
+    setLoading(true);
+    try {
+      // First create the auth user
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      if (data.user && !data.session) {
+        // User created but needs to confirm email
+        return { 
+          success: true, 
+          user: data.user, 
+          message: 'Please check your email to confirm your account.' 
+        };
+      }
+
+      // If user is signed in immediately, create the profile manually
+      if (data.user && data.session) {
+        console.log('Creating user profile for:', data.user.id);
+        try {
+          const { error: profileError } = await supabase
+            .from('users')
+            .insert({
+              id: data.user.id,
+              email: data.user.email || email,
+              name: name,
+              role: role,
+              location_id: locationId
+            });
+
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
+            console.error('Error details:', JSON.stringify(profileError, null, 2));
+            return { success: false, error: `Failed to create user profile: ${profileError.message}` };
+          }
+          
+          console.log('User profile created successfully');
+          // Reload the profile after creation to update the user state
+          await loadUserProfile(data.user);
+        } catch (profileError) {
+          console.error('Failed to create user profile:', profileError);
+          return { success: false, error: 'Failed to create user profile' };
+        }
+      }
+
+      return { success: true, user: data.user };
+    } catch (error) {
+      console.error('Sign up error:', error);
+      return { success: false, error: 'Registration failed' };
     } finally {
       setLoading(false);
     }
@@ -125,6 +208,7 @@ export const [AuthContext, useAuth] = createContextHook(() => {
     initialized,
     session,
     signIn,
+    signUp,
     signOut,
     hasPermission
   };

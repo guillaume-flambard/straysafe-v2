@@ -15,9 +15,10 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
-  locationId: string;
+  locationId?: string;
   avatar?: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface Dog {

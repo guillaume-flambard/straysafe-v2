@@ -7,17 +7,25 @@ import * as Lucide from "lucide-react-native";
 export default function TabLayout() {
   const authState = useAuth();
 
+  console.log('TabLayout: authState', authState ? 'exists' : 'null');
+
   // Safety check - ensure auth context is available
   if (!authState) {
+    console.log('TabLayout: No authState, returning null');
     return null;
   }
 
   const { user, initialized } = authState;
 
+  console.log('TabLayout:', { initialized, user: user ? 'exists' : 'null' });
+
   // Don't render tabs if not authenticated or still loading
   if (!initialized || !user) {
+    console.log('TabLayout: Not initialized or no user, returning null');
     return null;
   }
+
+  console.log('TabLayout: Rendering tabs');
 
   return (
     <Tabs

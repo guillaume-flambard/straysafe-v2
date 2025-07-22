@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, Image, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { StyleSheet, Text, View, Image, KeyboardAvoidingView, Platform, ScrollView, Alert, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/auth-store';
 import Input from '@/components/Input';
@@ -42,22 +42,6 @@ export default function LoginScreen() {
     }
   };
 
-  const handleDemoLogin = async () => {
-    // Demo credentials for testing
-    const demoEmail = 'admin@straysafe.org';
-    const demoPassword = 'password';
-    
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-    
-    const result = await signIn(demoEmail, demoPassword);
-    
-    if (result.success) {
-      router.replace('/(tabs)');
-    } else {
-      Alert.alert('Demo Login Failed', result.error || 'Please try again later.');
-    }
-  };
 
   return (
     <KeyboardAvoidingView
@@ -102,25 +86,16 @@ export default function LoginScreen() {
             fullWidth
           />
           
-          <Button
-            title="Demo Login"
-            onPress={handleDemoLogin}
-            variant="outline"
-            style={styles.demoButton}
-            fullWidth
-          />
-        </View>
-        
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            For demo purposes, use:
-          </Text>
-          <Text style={styles.credentials}>
-            Email: admin@straysafe.org
-          </Text>
-          <Text style={styles.credentials}>
-            Password: password
-          </Text>
+          <View style={styles.signupSection}>
+            <Text style={styles.signupText}>
+              Don't have an account?
+            </Text>
+            <Pressable onPress={() => router.push('/(auth)/register')}>
+              <Text style={styles.signupLink}>
+                Sign up here
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -135,8 +110,8 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginTop: 60,
-    marginBottom: 40,
+    marginTop: 80,
+    marginBottom: 50,
   },
   logo: {
     width: 120,
@@ -168,21 +143,23 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 10,
   },
-  demoButton: {
-    marginTop: 12,
-  },
-  footer: {
-    marginTop: 24,
+  signupSection: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 24,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
   },
-  footerText: {
+  signupText: {
     fontSize: 14,
     color: Colors.textLight,
-    marginBottom: 8,
+    marginRight: 4,
   },
-  credentials: {
+  signupLink: {
     fontSize: 14,
     color: Colors.primary,
-    fontWeight: '500',
+    fontWeight: '600',
   },
 });
