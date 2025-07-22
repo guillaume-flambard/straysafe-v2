@@ -3,7 +3,7 @@ import {
   StyleSheet,
   Text,
   View,
-  ScrollView,
+  FlatList,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -41,7 +41,7 @@ export default function ChatScreen() {
 
   const [messageText, setMessageText] = useState('');
   const [sending, setSending] = useState(false);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const flatListRef = useRef<FlatList>(null);
 
   // Get current conversation
   const conversation = conversations.find(c => c.id === conversationId);
@@ -63,7 +63,9 @@ export default function ChatScreen() {
   useEffect(() => {
     // Auto scroll to bottom when new messages arrive
     setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
+      if (messages.length > 0) {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }
     }, 100);
   }, [messages.length]);
 
@@ -127,6 +129,15 @@ export default function ChatScreen() {
     if (conversation.title) return conversation.title;
     if (conversation.dog_name) return `Discussion: ${conversation.dog_name}`;
     if (conversation.location_name) return conversation.location_name;
+    
+    // For private chats, show the other participant's name
+    if (conversation.type === 'private') {
+      const otherParticipant = conversation.other_participant_name || conversation.other_participant_email;
+      if (otherParticipant) {
+        return otherParticipant;
+      }
+    }
+    
     return 'Private Chat';
   };
 
@@ -178,7 +189,7 @@ export default function ChatScreen() {
     return currentDate !== previousDate;
   };
 
-  const MessageItem = ({ message, index }: { message: any; index: number }) => {
+  const MessageItem = React.memo(({ message, index }: { message: any; index: number }) => {
     const isOwnMessage = message.sender_id === user?.id;
     const previousMessage = index > 0 ? messages[index - 1] : null;
     const showDateSeparator = shouldShowDateSeparator(message, previousMessage);
@@ -201,7 +212,7 @@ export default function ChatScreen() {
         ]}>
           {!isOwnMessage && conversation?.type !== 'private' && (
             <Text style={styles.senderName}>
-              {message.sender_email || 'Unknown'}
+              {message.sender_name || message.sender_email || 'Unknown'}
             </Text>
           )}
           
@@ -214,7 +225,7 @@ export default function ChatScreen() {
                 <View style={styles.replyBar} />
                 <View style={styles.replyContent}>
                   <Text style={styles.replySender}>
-                    {message.reply_sender_email}
+                    {message.reply_sender_name || message.reply_sender_email}
                   </Text>
                   <Text style={styles.replyText} numberOfLines={2}>
                     {message.reply_content}
@@ -224,11 +235,18 @@ export default function ChatScreen() {
             )}
             
             {message.message_type === 'image' && message.image_url && (
-              <Image 
-                source={{ uri: message.image_url }} 
-                style={styles.messageImage}
-                resizeMode="cover"
-              />
+              <View style={styles.imageContainer}>
+                <Image 
+                  source={{ uri: message.image_url }} 
+                  style={styles.messageImage}
+                  resizeMode="cover"
+                  cachePolicy="memory-disk"
+                  recyclingKey={message.id}
+                  transition={200}
+                  placeholder="Loading..."
+                  placeholderContentFit="cover"
+                />
+              </View>
             )}
             
             <Text style={[
@@ -254,7 +272,12 @@ export default function ChatScreen() {
         </View>
       </>
     );
-  };
+  }, (prevProps, nextProps) => {
+    // Only re-render if the message itself has changed or if it's a different message
+    return prevProps.message.id === nextProps.message.id && 
+           prevProps.message.updated_at === nextProps.message.updated_at &&
+           prevProps.index === nextProps.index;
+  });
 
   if (messagesLoading && messages.length === 0) {
     return (
@@ -310,26 +333,34 @@ export default function ChatScreen() {
       )}
 
       {/* Messages */}
-      <ScrollView
-        ref={scrollViewRef}
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item, index }) => (
+          <MessageItem key={item.id} message={item} index={index} />
+        )}
         style={styles.messagesContainer}
         contentContainerStyle={styles.messagesContent}
         showsVerticalScrollIndicator={false}
-        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}
-      >
-        {messages.length === 0 ? (
+        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+        initialNumToRender={20}
+        getItemLayout={(data, index) => ({
+          length: 80, // Approximate height of a message
+          offset: 80 * index,
+          index,
+        })}
+        ListEmptyComponent={() => (
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
               No messages yet. Start the conversation!
             </Text>
           </View>
-        ) : (
-          messages.map((message, index) => (
-            <MessageItem key={message.id} message={message} index={index} />
-          ))
         )}
-        
-        {sending && (
+        ListFooterComponent={sending ? (
           <View style={[styles.messageContainer, styles.ownMessageContainer]}>
             <View style={[styles.messageBubble, styles.ownMessageBubble, styles.sendingBubble]}>
               <ActivityIndicator size="small" color={Colors.primary} />
@@ -338,8 +369,8 @@ export default function ChatScreen() {
               </Text>
             </View>
           </View>
-        )}
-      </ScrollView>
+        ) : null}
+      />
 
       {/* Input */}
       <View style={styles.inputContainer}>
@@ -534,11 +565,15 @@ const styles = StyleSheet.create({
     color: Colors.textLight,
     fontStyle: 'italic',
   },
+  imageContainer: {
+    marginBottom: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
   messageImage: {
     width: 200,
     height: 200,
     borderRadius: 12,
-    marginBottom: 8,
   },
   messageText: {
     fontSize: 16,

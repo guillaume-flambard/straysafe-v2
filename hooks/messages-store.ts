@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './auth-store';
 import { showToast } from '@/utils/toast';
+import { sendMessageNotification } from '@/utils/notifications';
 import type { 
   Conversation,
   ConversationWithDetails,
@@ -39,6 +40,9 @@ export function useMessages() {
   });
   
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  
+  // Track fallback timeouts to cancel them if subscription works
+  const fallbackTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   // ====================================
   // CONVERSATIONS
@@ -101,6 +105,19 @@ export function useMessages() {
           { 
             dog_id_param: params.dog_id,
             title_param: params.title || `Discussion about dog`,
+            description_param: params.description
+          }
+        );
+        
+        if (error) throw error;
+        conversationId = data;
+      } else if (params.type === 'location_group' && params.location_id) {
+        // Use helper function for location groups
+        const { data, error } = await supabase.rpc(
+          'create_location_conversation',
+          {
+            location_id_param: params.location_id,
+            title_param: params.title || `Location Group`,
             description_param: params.description
           }
         );
@@ -195,14 +212,39 @@ export function useMessages() {
       
       if (error) throw error;
       
-      const messages = (data || []).reverse(); // Reverse to show oldest first
+      const newMessages = (data || []).reverse(); // Reverse to show oldest first
       
-      setMessagesState(prev => ({
-        messages: offset === 0 ? messages : [...messages, ...prev.messages],
-        loading: false,
-        error: null,
-        hasMore: data ? data.length === limit : false
-      }));
+      setMessagesState(prev => {
+        // Smart merge: only add truly new messages to prevent unnecessary re-renders
+        if (offset === 0) {
+          const existingIds = new Set(prev.messages.map(m => m.id));
+          const trulyNewMessages = newMessages.filter(m => !existingIds.has(m.id));
+          
+          if (trulyNewMessages.length === 0) {
+            // No new messages, keep existing state to avoid re-render
+            return { ...prev, loading: false, error: null };
+          }
+          
+          // Merge existing messages with new ones, maintaining order
+          const mergedMessages = [...prev.messages, ...trulyNewMessages]
+            .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+          
+          return {
+            messages: mergedMessages,
+            loading: false,
+            error: null,
+            hasMore: data ? data.length === limit : false
+          };
+        } else {
+          // Normal pagination logic
+          return {
+            messages: [...newMessages, ...prev.messages],
+            loading: false,
+            error: null,
+            hasMore: data ? data.length === limit : false
+          };
+        }
+      });
     } catch (error) {
       console.error('Error fetching messages:', error);
       setMessagesState(prev => ({
@@ -220,7 +262,14 @@ export function useMessages() {
     }
 
     try {
-      const { error } = await supabase
+      console.log('Sending message:', { 
+        conversation_id: params.conversation_id,
+        sender_id: user.id,
+        content: params.content,
+        currentConversationId
+      });
+
+      const { data, error } = await supabase
         .from('messages')
         .insert({
           conversation_id: params.conversation_id,
@@ -230,15 +279,87 @@ export function useMessages() {
           image_url: params.image_url,
           metadata: params.metadata,
           reply_to_id: params.reply_to_id
-        });
+        })
+        .select()
+        .single();
       
       if (error) throw error;
+      
+      console.log('Message sent successfully:', data);
+      
+      // Primary: Let the real-time subscription handle the update
+      // Fallback: If subscription doesn't work within 100ms, refresh manually
+      if (params.conversation_id === currentConversationId) {
+        const timeoutId = setTimeout(async () => {
+          console.log('🔄 Fallback refresh after 100ms - subscription may have failed');
+          await fetchMessages(params.conversation_id, 0);
+          fallbackTimeoutsRef.current.delete(data.id);
+        }, 100);
+        
+        // Store timeout so subscription can cancel it if it works
+        fallbackTimeoutsRef.current.set(data.id, timeoutId);
+      }
+      
+      // Send push notifications to other conversation participants
+      await sendNotificationsForMessage(params.conversation_id, params.content);
       
       return true;
     } catch (error) {
       console.error('Error sending message:', error);
       showToast('Failed to send message', 'error');
       return false;
+    }
+  };
+
+  const sendNotificationsForMessage = async (conversationId: string, messageContent: string) => {
+    if (!user) return;
+
+    try {
+      // Get conversation details
+      const { data: conversation, error: convError } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('id', conversationId)
+        .single();
+
+      if (convError) throw convError;
+
+      // Get participant user IDs (excluding sender) using separate queries
+      const { data: participantRows, error: partError } = await supabase
+        .from('conversation_participants')
+        .select('user_id')
+        .eq('conversation_id', conversationId)
+        .neq('user_id', user.id)
+        .eq('is_active', true);
+
+      if (partError) throw partError;
+      if (!participantRows || participantRows.length === 0) return;
+
+      const recipientUserIds = participantRows.map(p => p.user_id);
+      const senderName = user.user_metadata?.full_name || user.email || 'Someone';
+      
+      // Send notification (simplified - just log for now since push notifications need production build)
+      console.log(`📱 Would send notification to ${recipientUserIds.length} users:`, {
+        conversationId,
+        senderId: user.id,
+        senderName,
+        message: messageContent.substring(0, 50) + (messageContent.length > 50 ? '...' : ''),
+        recipientUserIds,
+        conversationTitle: conversation?.title,
+      });
+
+      // Uncomment for actual push notifications in production:
+      // await sendMessageNotification({
+      //   conversationId,
+      //   senderId: user.id,
+      //   senderName,
+      //   message: messageContent,
+      //   recipientUserIds,
+      //   conversationTitle: conversation?.title,
+      // });
+
+    } catch (error) {
+      console.error('Error sending message notifications:', error);
     }
   };
 
@@ -262,43 +383,17 @@ export function useMessages() {
   
   const updatePresence = async (status: 'online' | 'away' | 'busy' | 'offline', conversationId?: string) => {
     if (!user) return;
-
-    try {
-      await supabase.rpc('update_user_presence', {
-        status_param: status,
-        conversation_id_param: conversationId
-      });
-    } catch (error) {
-      console.error('Error updating presence:', error);
-    }
+    // Skip presence updates for now in development
+    console.log(`👤 User presence: ${status}${conversationId ? ` in ${conversationId}` : ''}`);
   };
 
   const fetchPresence = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('user_presence')
-        .select('*');
-      
-      if (error) throw error;
-      
-      const presenceMap = (data || []).reduce((acc, presence) => {
-        acc[presence.user_id] = presence;
-        return acc;
-      }, {} as Record<string, UserPresence>);
-      
-      setPresenceState({
-        users: presenceMap,
-        loading: false,
-        error: null
-      });
-    } catch (error) {
-      console.error('Error fetching presence:', error);
-      setPresenceState(prev => ({
-        ...prev,
-        loading: false,
-        error: error instanceof Error ? error.message : 'Failed to load presence'
-      }));
-    }
+    // Skip presence fetching for now in development
+    setPresenceState({
+      users: {},
+      loading: false,
+      error: null
+    });
   }, []);
 
   // ====================================
@@ -324,37 +419,80 @@ export function useMessages() {
       )
       .subscribe();
 
-    // Subscription to messages changes
+    // Subscription to messages changes - simplified approach
     const messagesSubscription = supabase
       .channel('messages_changes')
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
         (payload) => {
-          if (payload.new.conversation_id === currentConversationId) {
-            // Refresh messages for current conversation
-            fetchMessages(currentConversationId, 0);
+          console.log('📨 SUBSCRIPTION: New message received:', {
+            id: payload.new.id,
+            conversation_id: payload.new.conversation_id,
+            sender_id: payload.new.sender_id,
+            content: payload.new.content,
+            currentConversationId
+          });
+          
+          // Cancel fallback timeout since subscription worked
+          const timeoutId = fallbackTimeoutsRef.current.get(payload.new.id);
+          if (timeoutId) {
+            console.log('⏰ Canceling fallback timeout - subscription worked');
+            clearTimeout(timeoutId);
+            fallbackTimeoutsRef.current.delete(payload.new.id);
           }
-          // Also refresh conversations list to update last message
+          
+          if (payload.new.conversation_id === currentConversationId && currentConversationId) {
+            console.log('✅ SUBSCRIPTION: Refreshing current conversation messages');
+            // Simple refresh without debouncing for more predictable behavior
+            fetchMessages(currentConversationId, 0);
+          } else {
+            console.log('❌ SUBSCRIPTION: Not refreshing (different conversation or no current conversation)');
+          }
+          // Refresh conversations list to update last message
           fetchConversations();
         }
       )
-      .subscribe();
-
-    // Subscription to presence changes
-    const presenceSubscription = supabase
-      .channel('presence_changes')
       .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'user_presence' },
-        () => fetchPresence()
+        { event: 'UPDATE', schema: 'public', table: 'messages' },
+        (payload) => {
+          console.log('📝 SUBSCRIPTION: Message updated:', payload.new);
+          if (payload.new.conversation_id === currentConversationId && currentConversationId) {
+            fetchMessages(currentConversationId, 0);
+          }
+          fetchConversations();
+        }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('🔌 SUBSCRIPTION STATUS:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Messages subscription is active');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.log('❌ Messages subscription failed');
+        }
+      });
+
+    // Skip presence subscription for development
+    // const presenceSubscription = supabase
+    //   .channel('presence_changes')
+    //   .on('postgres_changes',
+    //     { event: '*', schema: 'public', table: 'user_presence' },
+    //     () => fetchPresence()
+    //   )
+    //   .subscribe();
 
     // Set user offline when component unmounts
     return () => {
       updatePresence('offline');
       conversationsSubscription.unsubscribe();
       messagesSubscription.unsubscribe();
-      presenceSubscription.unsubscribe();
+      
+      // Clear any pending fallback timeouts
+      fallbackTimeoutsRef.current.forEach((timeoutId) => {
+        clearTimeout(timeoutId);
+      });
+      fallbackTimeoutsRef.current.clear();
+      
+      // presenceSubscription.unsubscribe();
     };
   }, [user, currentConversationId, fetchConversations, fetchMessages, fetchPresence]);
 

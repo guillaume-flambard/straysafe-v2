@@ -56,6 +56,15 @@ export default function MessagesScreen() {
     if (conversation.title) return conversation.title;
     if (conversation.dog_name) return `Discussion: ${conversation.dog_name}`;
     if (conversation.location_name) return conversation.location_name;
+    
+    // For private chats, show the other participant's name
+    if (conversation.type === 'private') {
+      const otherParticipant = conversation.other_participant_name || conversation.other_participant_email;
+      if (otherParticipant) {
+        return otherParticipant;
+      }
+    }
+    
     if (conversation.creator_email) return conversation.creator_email;
     return 'Private Chat';
   };

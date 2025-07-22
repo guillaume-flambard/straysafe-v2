@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, MessageCircle, Dog, MapPin, Users, Search, Check } from 'lucide-react-native';
 import { useMessages } from '@/hooks/messages-store';
 import { useDogs } from '@/hooks/dogs-store';
@@ -16,6 +17,7 @@ interface User {
   id: string;
   email: string;
   full_name?: string;
+  avatar_url?: string;
 }
 
 export default function NewConversationScreen() {
@@ -59,9 +61,10 @@ export default function NewConversationScreen() {
       setLoading(true);
       
       let query = supabase
-        .from('profiles') // Assuming you have a profiles table
-        .select('id, email, full_name')
-        .neq('id', user?.id); // Exclude current user
+        .from('profiles')
+        .select('id, email, full_name, avatar_url')
+        .neq('id', user?.id)
+        .eq('is_active', true); // Only show active users
 
       if (searchQuery) {
         query = query.or(`email.ilike.%${searchQuery}%,full_name.ilike.%${searchQuery}%`);
@@ -69,25 +72,28 @@ export default function NewConversationScreen() {
 
       const { data, error } = await query.limit(20);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching users:', error);
+        // Show a helpful message if no profiles table exists
+        if (error.code === '42P01') {
+          showToast('User profiles not set up yet. Please contact admin.', 'info');
+        } else {
+          showToast('Unable to load users: ' + error.message, 'warning');
+        }
+        setUsers([]);
+        return;
+      }
+      
       setUsers(data || []);
+      
+      // If no users found and no search query, show helpful message
+      if ((!data || data.length === 0) && !searchQuery) {
+        showToast('No other users found. Invite friends to join StraySafe!', 'info');
+      }
     } catch (error) {
       console.error('Error fetching users:', error);
-      // Fallback: try to get from auth.users (might need admin access)
-      try {
-        const { data, error } = await supabase.auth.admin.listUsers();
-        if (!error && data.users) {
-          const filteredUsers = data.users
-            .filter(u => u.id !== user?.id)
-            .filter(u => !searchQuery || u.email?.toLowerCase().includes(searchQuery.toLowerCase()))
-            .slice(0, 20)
-            .map(u => ({ id: u.id, email: u.email || '', full_name: u.user_metadata?.full_name }));
-          setUsers(filteredUsers);
-        }
-      } catch (adminError) {
-        showToast('Unable to load users', 'warning');
-        setUsers([]);
-      }
+      showToast('Unable to load users', 'warning');
+      setUsers([]);
     } finally {
       setLoading(false);
     }

@@ -72,9 +72,12 @@ export interface UserPresence {
 // Extended types with relations
 export interface ConversationWithDetails extends Conversation {
   creator_email?: string;
+  creator_name?: string;
   dog_name?: string;
   location_name?: string;
   participant_count?: number;
+  other_participant_name?: string;
+  other_participant_email?: string;
   last_message_content?: string;
   last_message_sender?: string;
   participants?: ConversationParticipant[];

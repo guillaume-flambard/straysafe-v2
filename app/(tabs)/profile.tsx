@@ -94,7 +94,7 @@ export default function ProfileScreen() {
           title="Notifications" 
           subtitle="Manage your notification preferences" 
           color={Colors.secondary}
-          onPress={() => router.push('/settings/notifications')}
+          onPress={() => router.push('/notification-settings')}
         />
         <ProfileOption 
           icon={<Shield size={20} color={Colors.success} />} 
