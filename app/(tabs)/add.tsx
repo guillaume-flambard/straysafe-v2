@@ -7,12 +7,27 @@ import Colors from '@/constants/colors';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
 import { Camera, Check, X, Image as ImageIcon } from 'lucide-react-native';
-import { mockLocations } from '@/mocks/data';
+import { supabase } from '@/lib/supabase';
+import { useQuery } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function AddDogScreen() {
   const router = useRouter();
   const { addDog } = useDogs();
+
+  // Fetch locations from database
+  const { data: locations = [] } = useQuery({
+    queryKey: ['locations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('locations')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
   
   const [name, setName] = useState('');
   const [breed, setBreed] = useState('');
@@ -125,7 +140,7 @@ export default function AddDogScreen() {
       gender,
       isNeutered,
       isVaccinated,
-      locationId: mockLocations[0].id,
+      locationId: locations[0]?.id || '',
       mainImage: imageUri || 'https://images.unsplash.com/photo-1561037404-61cd46aa615b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
     };
     

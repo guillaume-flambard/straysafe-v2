@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, Pressable } from 'react-native';
 import Colors from '@/constants/colors';
-import { mockLocations } from '@/mocks/data';
+import { supabase } from '@/lib/supabase';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth-store';
 import { MapPin, Check } from 'lucide-react-native';
 
@@ -9,7 +10,21 @@ export default function LocationSettingsScreen() {
   const { user } = useAuth();
   const [selectedLocation, setSelectedLocation] = useState(user?.locationId || '');
 
-  const LocationOption = ({ location }: { location: typeof mockLocations[0] }) => {
+  // Fetch locations from database
+  const { data: locations = [] } = useQuery({
+    queryKey: ['locations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('locations')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const LocationOption = ({ location }: { location: typeof locations[0] }) => {
     const isSelected = selectedLocation === location.id;
     
     return (
@@ -58,7 +73,7 @@ export default function LocationSettingsScreen() {
       </View>
 
       <View style={styles.locationsContainer}>
-        {mockLocations.map((location) => (
+        {locations.map((location) => (
           <LocationOption key={location.id} location={location} />
         ))}
       </View>

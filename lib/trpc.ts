@@ -6,6 +6,11 @@ import superjson from "superjson";
 export const trpc = createTRPCReact<AppRouter>();
 
 const getBaseUrl = () => {
+  // Check if we have a custom API URL from environment
+  if (process.env.EXPO_PUBLIC_API_BASE_URL) {
+    return process.env.EXPO_PUBLIC_API_BASE_URL;
+  }
+  
   // For local development - adjust URL as needed
   if (__DEV__) {
     return "http://localhost:3000";

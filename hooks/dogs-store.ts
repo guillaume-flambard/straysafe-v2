@@ -1,52 +1,84 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { useEffect, useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dog, DogEvent, DogStatus } from '@/types';
-import { mockDogs, mockEvents } from '@/mocks/data';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from './auth-store';
 
 export const [DogsContext, useDogs] = createContextHook(() => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [dogs, setDogs] = useState<Dog[]>([]);
   const [events, setEvents] = useState<DogEvent[]>([]);
 
-  // Fetch dogs from storage or mock data
+  // Fetch dogs from Supabase
   const dogsQuery = useQuery({
     queryKey: ['dogs'],
     queryFn: async () => {
-      try {
-        const storedDogs = await AsyncStorage.getItem('dogs');
-        if (storedDogs) {
-          return JSON.parse(storedDogs) as Dog[];
-        }
-        // Initialize with mock data
-        await AsyncStorage.setItem('dogs', JSON.stringify(mockDogs));
-        return mockDogs;
-      } catch (error) {
+      const { data, error } = await supabase
+        .from('dogs')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
         console.error('Failed to load dogs:', error);
-        return mockDogs;
+        throw error;
       }
+
+      // Transform database rows to Dog objects
+      const transformedDogs: Dog[] = data.map(row => ({
+        id: row.id,
+        name: row.name,
+        status: row.status as DogStatus,
+        gender: row.gender as 'male' | 'female' | 'unknown',
+        locationId: row.location_id,
+        breed: row.breed,
+        age: row.age,
+        description: row.description,
+        lastSeen: row.last_seen,
+        lastSeenLocation: row.last_seen_location,
+        medicalNotes: row.medical_notes,
+        isNeutered: row.is_neutered,
+        isVaccinated: row.is_vaccinated,
+        mainImage: row.main_image,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        createdBy: row.created_by,
+      }));
+
+      return transformedDogs;
     },
     enabled: !!user
   });
 
-  // Fetch events from storage or mock data
+  // Fetch events from Supabase
   const eventsQuery = useQuery({
     queryKey: ['events'],
     queryFn: async () => {
-      try {
-        const storedEvents = await AsyncStorage.getItem('events');
-        if (storedEvents) {
-          return JSON.parse(storedEvents) as DogEvent[];
-        }
-        // Initialize with mock data
-        await AsyncStorage.setItem('events', JSON.stringify(mockEvents));
-        return mockEvents;
-      } catch (error) {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('date', { ascending: false });
+
+      if (error) {
         console.error('Failed to load events:', error);
-        return mockEvents;
+        throw error;
       }
+
+      // Transform database rows to DogEvent objects
+      const transformedEvents: DogEvent[] = data.map(row => ({
+        id: row.id,
+        dogId: row.dog_id,
+        type: row.type as 'medical' | 'location' | 'status' | 'note',
+        title: row.title,
+        description: row.description,
+        date: row.date,
+        createdBy: row.created_by,
+        isPrivate: row.is_private,
+        createdAt: row.created_at,
+      }));
+
+      return transformedEvents;
     },
     enabled: !!user
   });
@@ -64,64 +96,110 @@ export const [DogsContext, useDogs] = createContextHook(() => {
     }
   }, [eventsQuery.data]);
 
-  // Mutation to update dogs
-  const updateDogsMutation = useMutation({
-    mutationFn: async (updatedDogs: Dog[]) => {
-      await AsyncStorage.setItem('dogs', JSON.stringify(updatedDogs));
-      return updatedDogs;
+  // Mutation to create a new dog
+  const createDogMutation = useMutation({
+    mutationFn: async (newDog: Omit<Dog, 'id' | 'createdAt' | 'updatedAt'>) => {
+      const { data, error } = await supabase
+        .from('dogs')
+        .insert({
+          name: newDog.name,
+          status: newDog.status,
+          gender: newDog.gender,
+          location_id: newDog.locationId,
+          breed: newDog.breed,
+          age: newDog.age,
+          description: newDog.description,
+          last_seen: newDog.lastSeen,
+          last_seen_location: newDog.lastSeenLocation,
+          medical_notes: newDog.medicalNotes,
+          is_neutered: newDog.isNeutered,
+          is_vaccinated: newDog.isVaccinated,
+          main_image: newDog.mainImage,
+          created_by: user?.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
     },
-    onSuccess: (data) => {
-      setDogs(data);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dogs'] });
     }
   });
 
-  // Mutation to update events
-  const updateEventsMutation = useMutation({
-    mutationFn: async (updatedEvents: DogEvent[]) => {
-      await AsyncStorage.setItem('events', JSON.stringify(updatedEvents));
-      return updatedEvents;
+  // Mutation to update a dog
+  const updateDogMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Dog> }) => {
+      const { data, error } = await supabase
+        .from('dogs')
+        .update({
+          name: updates.name,
+          status: updates.status,
+          gender: updates.gender,
+          location_id: updates.locationId,
+          breed: updates.breed,
+          age: updates.age,
+          description: updates.description,
+          last_seen: updates.lastSeen,
+          last_seen_location: updates.lastSeenLocation,
+          medical_notes: updates.medicalNotes,
+          is_neutered: updates.isNeutered,
+          is_vaccinated: updates.isVaccinated,
+          main_image: updates.mainImage,
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
     },
-    onSuccess: (data) => {
-      setEvents(data);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dogs'] });
+    }
+  });
+
+  // Mutation to create a new event
+  const createEventMutation = useMutation({
+    mutationFn: async (newEvent: Omit<DogEvent, 'id' | 'createdAt'>) => {
+      const { data, error } = await supabase
+        .from('events')
+        .insert({
+          dog_id: newEvent.dogId,
+          type: newEvent.type,
+          title: newEvent.title,
+          description: newEvent.description,
+          date: newEvent.date,
+          created_by: user?.id || '',
+          is_private: newEvent.isPrivate,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
     }
   });
 
   // Add a new dog
   const addDog = (dog: Omit<Dog, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newDog: Dog = {
-      ...dog,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    const updatedDogs = [...dogs, newDog];
-    updateDogsMutation.mutate(updatedDogs);
-    return newDog;
+    createDogMutation.mutate(dog);
   };
 
   // Update an existing dog
   const updateDog = (id: string, updates: Partial<Dog>) => {
-    const updatedDogs = dogs.map(dog => 
-      dog.id === id 
-        ? { ...dog, ...updates, updatedAt: new Date().toISOString() } 
-        : dog
-    );
-    updateDogsMutation.mutate(updatedDogs);
+    updateDogMutation.mutate({ id, updates });
   };
 
   // Add a new event
-  const addEvent = (event: Omit<DogEvent, 'id'>) => {
+  const addEvent = (event: Omit<DogEvent, 'id' | 'createdAt'>) => {
     if (!user) return null;
     
-    const newEvent: DogEvent = {
-      ...event,
-      id: Date.now().toString(),
-      createdBy: user.id
-    };
-    
-    const updatedEvents = [...events, newEvent];
-    updateEventsMutation.mutate(updatedEvents);
+    createEventMutation.mutate(event);
     
     // If it's a status event, update the dog's status
     if (event.type === 'status' && event.title.toLowerCase().includes('status changed')) {
@@ -131,8 +209,6 @@ export const [DogsContext, useDogs] = createContextHook(() => {
         updateDog(event.dogId, { status: newStatus });
       }
     }
-    
-    return newEvent;
   };
 
   // Get events for a specific dog

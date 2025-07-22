@@ -9,7 +9,8 @@ import StatusBadge from '@/components/StatusBadge';
 import EventCard from '@/components/EventCard';
 import Button from '@/components/Button';
 import { Calendar, MapPin, Stethoscope, FileText, Plus, Edit } from 'lucide-react-native';
-import { mockLocations } from '@/mocks/data';
+import { supabase } from '@/lib/supabase';
+import { useQuery } from '@tanstack/react-query';
 
 export default function DogProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -17,6 +18,20 @@ export default function DogProfileScreen() {
   const { getDog, getDogEvents, addEvent } = useDogs();
   const { user, hasPermission } = useAuth();
   const [activeTab, setActiveTab] = useState<'info' | 'timeline'>('info');
+
+  // Fetch locations from database
+  const { data: locations = [] } = useQuery({
+    queryKey: ['locations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('locations')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
   
   const dog = getDog(id);
   const events = getDogEvents(id);
@@ -34,7 +49,7 @@ export default function DogProfileScreen() {
     );
   }
 
-  const location = mockLocations.find(loc => loc.id === dog.locationId);
+  const location = locations.find(loc => loc.id === dog.locationId);
 
   const handleAddEvent = (type: DogEvent['type']) => {
     if (!user) return;
