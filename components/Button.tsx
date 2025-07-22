@@ -56,7 +56,7 @@ export default function Button({
   };
 
   const getTextStyle = () => {
-    const baseStyle = [styles.text, styles[`${size}Text` as keyof typeof styles]];
+    const baseStyle: any[] = [styles.text, styles[`${size}Text` as keyof typeof styles]];
     
     switch (variant) {
       case 'primary':
