@@ -1067,6 +1067,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   breedInputContainer: {
+    marginBottom : 18,
     flex: 1,
     position: 'relative',
   },
