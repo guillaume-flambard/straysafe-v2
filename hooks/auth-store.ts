@@ -9,8 +9,18 @@ export const [AuthContext, useAuth] = createContextHook(() => {
   const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
   useEffect(() => {
+    // Force initialization after 10 seconds if still not initialized
+    const forceInitTimeout = setTimeout(() => {
+      if (!initialized) {
+        console.log('Force initializing after timeout');
+        setInitialized(true);
+        setIsLoadingProfile(false);
+      }
+    }, 10000);
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -19,6 +29,9 @@ export const [AuthContext, useAuth] = createContextHook(() => {
       } else {
         setInitialized(true);
       }
+    }).catch((error) => {
+      console.error('Failed to get session:', error);
+      setInitialized(true);
     });
 
     // Listen for auth changes
@@ -32,39 +45,30 @@ export const [AuthContext, useAuth] = createContextHook(() => {
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(forceInitTimeout);
+    };
+  }, [initialized]);
 
   const loadUserProfile = async (supabaseUser: SupabaseUser) => {
-    console.log('Loading profile for user:', supabaseUser.id);
+    // Prevent concurrent profile loading
+    if (isLoadingProfile) {
+      console.log('Profile loading already in progress, skipping...');
+      return;
+    }
     
-    // Add timeout to prevent infinite loading
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Profile loading timeout')), 5000)
-    );
+    console.log('Loading profile for user:', supabaseUser.id);
+    setIsLoadingProfile(true);
     
     try {
-      const profilePromise = supabase
+      const { data: profile, error } = await supabase
         .from('users')
         .select('*')
         .eq('id', supabaseUser.id)
         .single();
 
-      const { data: profile, error } = await Promise.race([
-        profilePromise,
-        timeoutPromise
-      ]) as any;
-
       console.log('Profile query result:', { profile, error });
-
-      if (error) {
-        console.error('Error loading user profile:', error);
-        // If no profile exists, set initialized anyway to unblock the app
-        console.log('No profile found, but setting initialized to true');
-        setUser(null);
-        setInitialized(true);
-        return;
-      }
 
       if (profile) {
         const userProfile: User = {
@@ -79,15 +83,17 @@ export const [AuthContext, useAuth] = createContextHook(() => {
         };
         console.log('Setting user profile:', userProfile);
         setUser(userProfile);
+      } else {
+        console.log('No profile found, setting user to null');
+        setUser(null);
       }
     } catch (error) {
-      console.error('Failed to load user profile (timeout or error):', error);
-      // Force initialization to unblock the app
+      console.error('Failed to load user profile:', error);
       setUser(null);
-      setInitialized(true);
     } finally {
       console.log('Setting initialized to true');
       setInitialized(true);
+      setIsLoadingProfile(false);
     }
   };
 

@@ -80,26 +80,28 @@ export default function DogsScreen() {
         counts={counts}
       />
       
-      {filteredDogs.length === 0 ? (
-        <Animated.View style={[styles.emptyContainer, { opacity: fadeAnim }]}>
-          <Text style={styles.emptyText}>No dogs found</Text>
-          <Text style={styles.emptySubtext}>
-            {searchQuery 
-              ? 'Try adjusting your search or filters' 
-              : 'Add a new dog to get started'}
-          </Text>
-        </Animated.View>
-      ) : (
-        <Animated.View style={[styles.listContainer, { opacity: fadeAnim }]}>
-          <FlatList
-            data={filteredDogs}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <DogCard dog={item} />}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-          />
-        </Animated.View>
-      )}
+      <View style={styles.contentContainer}>
+        {filteredDogs.length === 0 ? (
+          <Animated.View style={[styles.emptyContainer, { opacity: fadeAnim }]}>
+            <Text style={styles.emptyText}>No dogs found</Text>
+            <Text style={styles.emptySubtext}>
+              {searchQuery 
+                ? 'Try adjusting your search or filters' 
+                : 'Add a new dog to get started'}
+            </Text>
+          </Animated.View>
+        ) : (
+          <Animated.View style={[styles.listContainer, { opacity: fadeAnim }]}>
+            <FlatList
+              data={filteredDogs}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => <DogCard dog={item} />}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+            />
+          </Animated.View>
+        )}
+      </View>
     </View>
   );
 }
@@ -126,19 +128,23 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     borderRadius: 8,
   },
+  contentContainer: {
+    flex: 1,
+  },
   listContainer: {
     flex: 1,
   },
   listContent: {
     padding: 16,
-    paddingTop: 8,
+    paddingTop: 0,
     paddingBottom: 120,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 40,
   },
   emptyText: {
     fontSize: 18,

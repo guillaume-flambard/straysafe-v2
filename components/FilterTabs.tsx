@@ -86,6 +86,7 @@ export default function FilterTabs({ selectedFilter, onFilterChange, counts }: F
       horizontal 
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.container}
+      style={styles.scrollView}
     >
       {filters.map((filter) => (
         <FilterTab key={filter.value} filter={filter} />
@@ -95,6 +96,10 @@ export default function FilterTabs({ selectedFilter, onFilterChange, counts }: F
 }
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   container: {
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -102,12 +107,12 @@ const styles = StyleSheet.create({
   tab: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 6,
     paddingHorizontal: 16,
     borderRadius: 20,
     marginRight: 8,
     backgroundColor: Colors.background,
-    minHeight: 40,
+    minHeight: 32,
   },
   selectedTab: {
     backgroundColor: Colors.primary,
