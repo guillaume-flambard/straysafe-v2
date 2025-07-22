@@ -16,9 +16,9 @@ export default function Index() {
     );
   }
 
-  const { initialized, user } = authState;
+  const { initialized, user, session } = authState;
 
-  // Show loading while checking auth state
+  // Show loading while checking auth state OR while profile is loading
   if (!initialized) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background }}>
@@ -28,11 +28,18 @@ export default function Index() {
   }
 
   // Redirect based on auth state
-  console.log('Index: Redirecting...', { user: user ? 'exists' : 'null' });
+  console.log('Index: Redirecting...', { 
+    user: user ? 'exists' : 'null', 
+    session: session ? 'exists' : 'null' 
+  });
   
   if (user) {
     console.log('Index: Redirecting to tabs');
     return <Redirect href="/(tabs)" />;
+  } else if (session && !user) {
+    // User has auth session but no profile - redirect to register to complete profile
+    console.log('Index: User has session but no profile, redirecting to register');
+    return <Redirect href="/(auth)/register" />;
   } else {
     console.log('Index: Redirecting to login');
     return <Redirect href="/(auth)/login" />;

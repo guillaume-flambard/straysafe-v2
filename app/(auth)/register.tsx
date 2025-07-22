@@ -12,27 +12,44 @@ import { User, MapPin, Mail, Lock, ArrowLeft } from 'lucide-react-native';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { signUp, loading } = useAuth();
+  const { signUp, loading, session, user } = useAuth();
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(session?.user?.email || '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole>('volunteer');
   const [selectedLocationId, setSelectedLocationId] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // Check if user is already authenticated but missing profile
+  const isCompletingProfile = session && !user;
 
   // Fetch locations for selection
-  const { data: locations = [] } = useQuery({
+  const { data: locations = [], isLoading: isLoadingLocations, error: locationsError } = useQuery({
     queryKey: ['locations'],
     queryFn: async () => {
+      console.log('Fetching locations...');
+      
       const { data, error } = await supabase
         .from('locations')
         .select('*')
         .order('name');
       
-      if (error) throw error;
+      console.log('Locations query result:', { data, error });
+      
+      if (error) {
+        console.error('Error fetching locations:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        throw error;
+      }
+      
+      console.log('Fetched locations count:', data?.length);
+      console.log('Fetched locations:', data);
       return data;
-    }
+    },
+    retry: 3,
+    retryDelay: 1000
   });
 
   const roleOptions: { value: UserRole; label: string; description: string }[] = [
@@ -60,22 +77,24 @@ export default function RegisterScreen() {
       newErrors.name = 'Full name is required';
     }
     
-    if (!email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Email is invalid';
-    }
-    
-    if (!password) {
-      newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-    
-    if (!confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+    if (!isCompletingProfile) {
+      if (!email.trim()) {
+        newErrors.email = 'Email is required';
+      } else if (!/\S+@\S+\.\S+/.test(email)) {
+        newErrors.email = 'Email is invalid';
+      }
+      
+      if (!password) {
+        newErrors.password = 'Password is required';
+      } else if (password.length < 6) {
+        newErrors.password = 'Password must be at least 6 characters';
+      }
+      
+      if (!confirmPassword) {
+        newErrors.confirmPassword = 'Please confirm your password';
+      } else if (password !== confirmPassword) {
+        newErrors.confirmPassword = 'Passwords do not match';
+      }
     }
 
     if (!selectedLocationId) {
@@ -89,27 +108,70 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     if (!validate()) return;
     
-    const result = await signUp(email, password, name, selectedRole, selectedLocationId);
-    
-    if (result.success) {
-      if (result.message) {
-        // Email confirmation required
-        Alert.alert(
-          'Account Created!', 
-          result.message,
-          [
-            {
-              text: 'OK',
-              onPress: () => router.replace('/(auth)/login')
-            }
-          ]
-        );
-      } else {
-        // Account created and logged in
-        router.replace('/(tabs)');
+    if (isCompletingProfile) {
+      // Create profile for existing user
+      setIsCreatingProfile(true);
+      try {
+        console.log('Creating profile for user:', session!.user.id);
+        const { data, error } = await supabase
+          .from('users')
+          .insert({
+            id: session!.user.id,
+            email: session!.user.email!,
+            name: name,
+            role: selectedRole,
+            location_id: selectedLocationId
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Profile creation error:', error);
+          console.error('Error details:', JSON.stringify(error, null, 2));
+          Alert.alert('Profile Creation Failed', error.message);
+          return;
+        }
+        
+        console.log('Profile created successfully:', data);
+        
+        // Force refresh auth state to load new profile
+        await supabase.auth.refreshSession();
+        
+        // Small delay to let auth state update
+        setTimeout(() => {
+          router.replace('/(tabs)');
+        }, 1000);
+        
+      } catch (error) {
+        console.error('Failed to create profile:', error);
+        Alert.alert('Profile Creation Failed', 'Please try again.');
+      } finally {
+        setIsCreatingProfile(false);
       }
     } else {
-      Alert.alert('Registration Failed', result.error || 'Please try again.');
+      // Normal signup process
+      const result = await signUp(email, password, name, selectedRole, selectedLocationId);
+      
+      if (result.success) {
+        if (result.message) {
+          // Email confirmation required
+          Alert.alert(
+            'Account Created!', 
+            result.message,
+            [
+              {
+                text: 'OK',
+                onPress: () => router.replace('/(auth)/login')
+              }
+            ]
+          );
+        } else {
+          // Account created and logged in
+          router.replace('/(tabs)');
+        }
+      } else {
+        Alert.alert('Registration Failed', result.error || 'Please try again.');
+      }
     }
   };
 
@@ -189,9 +251,9 @@ export default function RegisterScreen() {
         <View style={styles.header}>
           <Pressable
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => isCompletingProfile ? {} : router.replace('/(auth)/login')}
           >
-            <ArrowLeft size={24} color={Colors.primary} />
+            <ArrowLeft size={24} color={isCompletingProfile ? Colors.textLight : Colors.primary} />
           </Pressable>
           
           <View style={styles.logoContainer}>
@@ -199,8 +261,13 @@ export default function RegisterScreen() {
               source={{ uri: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80' }}
               style={styles.logo}
             />
-            <Text style={styles.title}>Join StraySafe</Text>
-            <Text style={styles.subtitle}>Help protect stray dogs in your community</Text>
+            <Text style={styles.title}>{isCompletingProfile ? 'Complete Your Profile' : 'Join StraySafe'}</Text>
+            <Text style={styles.subtitle}>
+              {isCompletingProfile 
+                ? 'Please complete your profile to continue'
+                : 'Help protect stray dogs in your community'
+              }
+            </Text>
           </View>
         </View>
         
@@ -217,36 +284,40 @@ export default function RegisterScreen() {
             leftIcon={<User size={20} color={Colors.textLight} />}
           />
           
-          <Input
-            label="Email"
-            placeholder="Enter your email address"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-            error={errors.email}
-            leftIcon={<Mail size={20} color={Colors.textLight} />}
-          />
-          
-          <Input
-            label="Password"
-            placeholder="Create a password"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-            error={errors.password}
-            leftIcon={<Lock size={20} color={Colors.textLight} />}
-          />
-          
-          <Input
-            label="Confirm Password"
-            placeholder="Confirm your password"
-            secureTextEntry
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            error={errors.confirmPassword}
-            leftIcon={<Lock size={20} color={Colors.textLight} />}
-          />
+          {!isCompletingProfile && (
+            <>
+              <Input
+                label="Email"
+                placeholder="Enter your email address"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
+                error={errors.email}
+                leftIcon={<Mail size={20} color={Colors.textLight} />}
+              />
+              
+              <Input
+                label="Password"
+                placeholder="Create a password"
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+                error={errors.password}
+                leftIcon={<Lock size={20} color={Colors.textLight} />}
+              />
+              
+              <Input
+                label="Confirm Password"
+                placeholder="Confirm your password"
+                secureTextEntry
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                error={errors.confirmPassword}
+                leftIcon={<Lock size={20} color={Colors.textLight} />}
+              />
+            </>
+          )}
 
           {/* Role Selection */}
           <Text style={styles.sectionTitle}>Select Your Role</Text>
@@ -263,18 +334,38 @@ export default function RegisterScreen() {
           {errors.location && <Text style={styles.errorText}>{errors.location}</Text>}
           
           <View style={styles.locationsContainer}>
-            {locations.map((location) => (
-              <LocationOption key={location.id} location={location} />
-            ))}
+            {isLoadingLocations ? (
+              <Text style={styles.loadingText}>Loading locations...</Text>
+            ) : locationsError ? (
+              <Text style={styles.errorText}>Failed to load locations. Please try again.</Text>
+            ) : locations.length === 0 ? (
+              <Text style={styles.errorText}>No locations available. Please contact support.</Text>
+            ) : (
+              locations.map((location) => (
+                <LocationOption key={location.id} location={location} />
+              ))
+            )}
           </View>
           
           <Button
-            title="Create Account"
+            title={isCompletingProfile ? "Complete Profile" : "Create Account"}
             onPress={handleRegister}
-            loading={loading}
+            loading={loading || isCreatingProfile}
             style={styles.registerButton}
             fullWidth
           />
+          
+          {isCompletingProfile && (
+            <Pressable
+              style={styles.logoutButtonBottom}
+              onPress={async () => {
+                await supabase.auth.signOut();
+                router.replace('/(auth)/login');
+              }}
+            >
+              <Text style={styles.logoutTextBottom}>Logout</Text>
+            </Pressable>
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -295,6 +386,18 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginBottom: 20,
     padding: 5,
+  },
+  logoutButtonBottom: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: Colors.textLight,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  logoutTextBottom: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
   logoContainer: {
     alignItems: 'center',
@@ -418,5 +521,11 @@ const styles = StyleSheet.create({
     color: Colors.danger,
     fontSize: 12,
     marginBottom: 8,
+  },
+  loadingText: {
+    color: Colors.textLight,
+    fontSize: 14,
+    textAlign: 'center',
+    padding: 16,
   },
 });

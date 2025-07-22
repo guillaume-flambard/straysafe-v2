@@ -12,17 +12,22 @@ export const [AuthContext, useAuth] = createContextHook(() => {
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
   useEffect(() => {
-    // Force initialization after 10 seconds if still not initialized
+    let isMounted = true;
+    
+    // Force initialization after 15 seconds if still not initialized
     const forceInitTimeout = setTimeout(() => {
-      if (!initialized) {
+      if (isMounted && !initialized) {
         console.log('Force initializing after timeout');
         setInitialized(true);
         setIsLoadingProfile(false);
       }
-    }, 10000);
+    }, 15000);
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted) return;
+      
+      console.log('Initial session:', session ? 'exists' : 'none');
       setSession(session);
       if (session?.user) {
         loadUserProfile(session.user);
@@ -31,11 +36,16 @@ export const [AuthContext, useAuth] = createContextHook(() => {
       }
     }).catch((error) => {
       console.error('Failed to get session:', error);
-      setInitialized(true);
+      if (isMounted) {
+        setInitialized(true);
+      }
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return;
+      
+      console.log('Auth state change:', event, session ? 'session exists' : 'no session');
       setSession(session);
       if (session?.user) {
         await loadUserProfile(session.user);
@@ -46,10 +56,11 @@ export const [AuthContext, useAuth] = createContextHook(() => {
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
       clearTimeout(forceInitTimeout);
     };
-  }, [initialized]);
+  }, []);
 
   const loadUserProfile = async (supabaseUser: SupabaseUser) => {
     // Prevent concurrent profile loading
@@ -62,15 +73,28 @@ export const [AuthContext, useAuth] = createContextHook(() => {
     setIsLoadingProfile(true);
     
     try {
-      const { data: profile, error } = await supabase
+      // Add timeout to the query
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Profile query timeout')), 5000);
+      });
+      
+      const queryPromise = supabase
         .from('users')
         .select('*')
         .eq('id', supabaseUser.id)
         .single();
+      
+      const { data: profile, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
-      console.log('Profile query result:', { profile, error });
+      console.log('Profile query completed:', { 
+        hasProfile: !!profile, 
+        errorCode: error?.code 
+      });
 
-      if (profile) {
+      if (error && error.code !== 'PGRST116') {
+        console.error('❌ Profile query error:', error);
+        setUser(null);
+      } else if (profile) {
         const userProfile: User = {
           id: profile.id,
           email: profile.email,
@@ -81,17 +105,21 @@ export const [AuthContext, useAuth] = createContextHook(() => {
           createdAt: profile.created_at,
           updatedAt: profile.updated_at,
         };
-        console.log('Setting user profile:', userProfile);
+        console.log('Profile loaded successfully:', userProfile.name);
         setUser(userProfile);
       } else {
-        console.log('No profile found, setting user to null');
+        console.log('No profile found - redirect to complete registration');
         setUser(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load user profile:', error);
+      if (error?.message === 'Profile query timeout') {
+        console.error('Query timed out, will retry...');
+        // Don't set user to null on timeout - let it retry
+        return;
+      }
       setUser(null);
     } finally {
-      console.log('Setting initialized to true');
       setInitialized(true);
       setIsLoadingProfile(false);
     }
