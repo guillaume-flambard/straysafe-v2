@@ -186,8 +186,17 @@ export const [DogsContext, useDogs] = createContextHook(() => {
   });
 
   // Add a new dog
-  const addDog = (dog: Omit<Dog, 'id' | 'createdAt' | 'updatedAt'>) => {
-    createDogMutation.mutate(dog);
+  const addDog = async (dog: Omit<Dog, 'id' | 'createdAt' | 'updatedAt'>): Promise<Dog> => {
+    return new Promise((resolve, reject) => {
+      createDogMutation.mutate(dog, {
+        onSuccess: (data) => {
+          resolve(data);
+        },
+        onError: (error) => {
+          reject(error);
+        }
+      });
+    });
   };
 
   // Update an existing dog
