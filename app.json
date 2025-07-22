@@ -48,7 +48,13 @@
       [
         "expo-router",
         {
-          "origin": "https://rork.com/"
+          "root": "./app"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationPermission": "The app accesses your location to show nearby dogs."
         }
       ],
       [
@@ -63,9 +69,6 @@
       "typedRoutes": true
     },
     "extra": {
-      "router": {
-        "origin": "https://rork.com/"
-      },
       "eas": {
         "projectId": "864ab5e4-68a7-4e76-a710-9228bededb21"
       }

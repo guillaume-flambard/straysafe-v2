@@ -3,11 +3,9 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "bunx rork start -p 90jr5rwrli1nwfdthr755 --tunnel",
-    "start-web": "bunx rork start -p 90jr5rwrli1nwfdthr755 --web --tunnel",
-    "start-web-dev": "DEBUG=expo* bunx rork start -p 90jr5rwrli1nwfdthr755 --web --tunnel",
+    "start": "npx expo start -c",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "npx expo run:ios"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
@@ -45,6 +43,7 @@
     "react-dom": "19.0.0",
     "react-native": "0.79.5",
     "react-native-gesture-handler": "~2.24.0",
+    "react-native-maps": "1.20.1",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
     "react-native-svg": "15.11.2",

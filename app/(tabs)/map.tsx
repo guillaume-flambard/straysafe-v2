@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Dimensions, Platform, Pressable, Modal, ScrollView, Image } from 'react-native';
+import { StyleSheet, Text, View, Dimensions, Platform, Pressable, Modal, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { useDogs } from '@/hooks/dogs-store';
 import { useRouter } from 'expo-router';
 import Colors from '@/constants/colors';
-import { MapPin, X } from 'lucide-react-native';
+import { MapPin, X, Filter, Heart, Home, Users } from 'lucide-react-native';
 import StatusBadge from '@/components/StatusBadge';
-import { Dog } from '@/types';
+import { Dog, DogStatus } from '@/types';
+import MapView, { Marker } from 'react-native-maps';
+import * as Location from 'expo-location';
 
 const { width, height } = Dimensions.get('window');
 
@@ -34,8 +36,104 @@ const generateKohPhanganCoordinates = (index: number, total: number) => {
   return locations[index % locations.length];
 };
 
-const SimpleMap = ({ dogs, onDogPress }: { dogs: Dog[], onDogPress: (dog: Dog) => void }) => {
+// Custom Marker Component
+const CustomMarker = ({ dog, onPress }: { dog: Dog; onPress: () => void }) => {
+  const getMarkerColor = () => {
+    switch (dog.status) {
+      case 'stray': return Colors.danger;
+      case 'fostered': return Colors.primary;
+      case 'adopted': return Colors.success;
+      default: return Colors.textLight;
+    }
+  };
+
+  const getMarkerIcon = () => {
+    switch (dog.status) {
+      case 'stray': return Heart;
+      case 'fostered': return Users;
+      case 'adopted': return Home;
+      default: return MapPin;
+    }
+  };
+
+  const IconComponent = getMarkerIcon();
+
+  return (
+    <Pressable
+      style={[styles.customMarker, { borderColor: getMarkerColor() }]}
+      onPress={onPress}
+    >
+      <View style={[styles.markerContent, { backgroundColor: getMarkerColor() }]}>
+        <IconComponent size={16} color="white" />
+      </View>
+    </Pressable>
+  );
+};
+
+// Filter Component
+const MapFilters = ({ 
+  activeFilters, 
+  onFilterChange 
+}: { 
+  activeFilters: Set<DogStatus>; 
+  onFilterChange: (status: DogStatus) => void; 
+}) => {
+  const filters: { status: DogStatus; label: string; color: string; icon: any }[] = [
+    { status: 'stray', label: 'Stray', color: Colors.danger, icon: Heart },
+    { status: 'fostered', label: 'Fostered', color: Colors.primary, icon: Users },
+    { status: 'adopted', label: 'Adopted', color: Colors.success, icon: Home },
+  ];
+
+  return (
+    <View style={styles.filtersContainer}>
+      <View style={styles.filtersHeader}>
+        <Filter size={16} color={Colors.text} />
+        <Text style={styles.filtersTitle}>Filters</Text>
+      </View>
+      <View style={styles.filtersRow}>
+        {filters.map(({ status, label, color, icon: IconComponent }) => {
+          const isActive = activeFilters.has(status);
+          return (
+            <Pressable
+              key={status}
+              style={[
+                styles.filterButton,
+                { borderColor: color },
+                isActive && { backgroundColor: color + '20' }
+              ]}
+              onPress={() => onFilterChange(status)}
+            >
+              <IconComponent 
+                size={14} 
+                color={isActive ? color : Colors.textLight} 
+              />
+              <Text 
+                style={[
+                  styles.filterText,
+                  { color: isActive ? color : Colors.textLight }
+                ]}
+              >
+                {label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+};
+
+const SimpleMap = ({ 
+  dogs, 
+  onDogPress,
+  userLocation 
+}: { 
+  dogs: Dog[]; 
+  onDogPress: (dog: Dog) => void;
+  userLocation: { latitude: number; longitude: number } | null;
+}) => {
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapRef, setMapRef] = useState<MapView | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setMapLoaded(true), 1000);
@@ -45,73 +143,61 @@ const SimpleMap = ({ dogs, onDogPress }: { dogs: Dog[], onDogPress: (dog: Dog) =
   if (!mapLoaded) {
     return (
       <View style={styles.mapPlaceholder}>
-        <MapPin size={48} color={Colors.primary} />
+        <ActivityIndicator size="large" color={Colors.primary} />
         <Text style={styles.loadingText}>Loading Koh Phangan Map...</Text>
       </View>
     );
   }
 
+  const centerOnUser = () => {
+    if (userLocation && mapRef) {
+      mapRef.animateToRegion({
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02,
+      }, 1000);
+    }
+  };
+
   return (
     <View style={styles.mapContainer}>
-      <View style={styles.mapBackground}>
-        {/* Island outline */}
-        <View style={styles.island} />
-        
-        {/* Main locations */}
-        <View style={[styles.location, { left: width * 0.5, top: height * 0.4 }]}>
-          <Text style={styles.locationText}>Thong Sala</Text>
-        </View>
-        <View style={[styles.location, { left: width * 0.7, top: height * 0.3 }]}>
-          <Text style={styles.locationText}>Haad Rin</Text>
-        </View>
-        <View style={[styles.location, { left: width * 0.3, top: height * 0.5 }]}>
-          <Text style={styles.locationText}>Srithanu</Text>
-        </View>
-        
-        {/* Dog markers */}
+      <MapView
+        ref={setMapRef}
+        style={styles.map}
+        initialRegion={{
+          latitude: userLocation?.latitude || KOH_PHANGAN_CENTER.lat,
+          longitude: userLocation?.longitude || KOH_PHANGAN_CENTER.lng,
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        }}
+        showsUserLocation={true}
+        followsUserLocation={false}
+        showsMyLocationButton={false}
+      >
         {dogs.map((dog, index) => {
           const coords = generateKohPhanganCoordinates(index, dogs.length);
-          const x = ((coords.lng - MAP_BOUNDS.west) / (MAP_BOUNDS.east - MAP_BOUNDS.west)) * width;
-          const y = ((MAP_BOUNDS.north - coords.lat) / (MAP_BOUNDS.north - MAP_BOUNDS.south)) * (height * 0.6);
-          
           return (
-            <Pressable
+            <Marker
               key={dog.id}
-              style={[
-                styles.dogMarker,
-                {
-                  left: Math.max(20, Math.min(x - 15, width - 50)),
-                  top: Math.max(80, Math.min(y + 80, height * 0.7)),
-                  backgroundColor: dog.status === 'stray' ? Colors.danger : 
-                                 dog.status === 'adopted' ? Colors.success : 
-                                 dog.status === 'fostered' ? Colors.secondary : Colors.textLight
-                }
-              ]}
-              onPress={() => onDogPress(dog)}
+              coordinate={{ latitude: coords.lat, longitude: coords.lng }}
+              tracksViewChanges={false}
             >
-              <MapPin size={20} color="white" />
-            </Pressable>
+              <CustomMarker 
+                dog={dog} 
+                onPress={() => onDogPress(dog)} 
+              />
+            </Marker>
           );
         })}
-      </View>
+      </MapView>
       
-      <View style={styles.mapOverlay}>
-        <View style={styles.legend}>
-          <Text style={styles.legendTitle}>Koh Phangan</Text>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: Colors.danger }]} />
-            <Text style={styles.legendText}>Stray Dogs</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: Colors.secondary }]} />
-            <Text style={styles.legendText}>Fostered</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: Colors.success }]} />
-            <Text style={styles.legendText}>Adopted</Text>
-          </View>
-        </View>
-      </View>
+      {/* User Location Button */}
+      {userLocation && (
+        <Pressable style={styles.locationButton} onPress={centerOnUser}>
+          <MapPin size={20} color={Colors.primary} />
+        </Pressable>
+      )}
     </View>
   );
 };
@@ -185,6 +271,33 @@ export default function MapScreen() {
   const { dogs, isLoading } = useDogs();
   const [selectedDog, setSelectedDog] = useState<Dog | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<Set<DogStatus>>(
+    new Set(['stray', 'fostered', 'adopted'])
+  );
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  // Request location permission and get user location
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const location = await Location.getCurrentPositionAsync({});
+          setUserLocation({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          });
+        }
+      } catch (error) {
+        console.log('Error getting location:', error);
+        // Fallback to Koh Phangan center
+        setUserLocation({
+          latitude: KOH_PHANGAN_CENTER.lat,
+          longitude: KOH_PHANGAN_CENTER.lng,
+        });
+      }
+    })();
+  }, []);
 
   const handleDogPress = (dog: Dog) => {
     setSelectedDog(dog);
@@ -195,6 +308,19 @@ export default function MapScreen() {
     setModalVisible(false);
     setSelectedDog(null);
   };
+
+  const handleFilterChange = (status: DogStatus) => {
+    const newFilters = new Set(activeFilters);
+    if (newFilters.has(status)) {
+      newFilters.delete(status);
+    } else {
+      newFilters.add(status);
+    }
+    setActiveFilters(newFilters);
+  };
+
+  // Filter dogs based on active filters
+  const filteredDogs = dogs.filter(dog => activeFilters.has(dog.status));
 
   if (isLoading) {
     return (
@@ -207,19 +333,37 @@ export default function MapScreen() {
 
   return (
     <View style={styles.container}>
-      <SimpleMap dogs={dogs} onDogPress={handleDogPress} />
+      <SimpleMap 
+        dogs={filteredDogs} 
+        onDogPress={handleDogPress}
+        userLocation={userLocation}
+      />
+      
+      {/* Filters */}
+      <View style={styles.filtersWrapper}>
+        <MapFilters 
+          activeFilters={activeFilters}
+          onFilterChange={handleFilterChange}
+        />
+      </View>
       
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{dogs.filter(d => d.status === 'stray').length}</Text>
+          <Text style={styles.statNumber}>
+            {activeFilters.has('stray') ? dogs.filter(d => d.status === 'stray').length : 0}
+          </Text>
           <Text style={styles.statLabel}>Stray Dogs</Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{dogs.filter(d => d.status === 'fostered').length}</Text>
+          <Text style={styles.statNumber}>
+            {activeFilters.has('fostered') ? dogs.filter(d => d.status === 'fostered').length : 0}
+          </Text>
           <Text style={styles.statLabel}>Fostered</Text>
         </View>
         <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{dogs.filter(d => d.status === 'adopted').length}</Text>
+          <Text style={styles.statNumber}>
+            {activeFilters.has('adopted') ? dogs.filter(d => d.status === 'adopted').length : 0}
+          </Text>
           <Text style={styles.statLabel}>Adopted</Text>
         </View>
       </View>
@@ -253,55 +397,9 @@ const styles = StyleSheet.create({
     flex: 1,
     position: 'relative',
   },
-  mapBackground: {
-    flex: 1,
-    backgroundColor: '#4A90E2',
-    position: 'relative',
-  },
-  island: {
-    position: 'absolute',
-    left: width * 0.2,
-    top: height * 0.15,
-    width: width * 0.6,
-    height: height * 0.5,
-    backgroundColor: '#8FBC8F',
-    borderRadius: width * 0.3,
-    transform: [{ rotate: '15deg' }],
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  location: {
-    position: 'absolute',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  locationText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: Colors.text,
-  },
-  dogMarker: {
-    position: 'absolute',
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+  map: {
+    width: '100%',
+    height: '100%',
   },
   mapPlaceholder: {
     flex: 1,
@@ -439,5 +537,90 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  // New styles for improvements
+  customMarker: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 3,
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  markerContent: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  locationButton: {
+    position: 'absolute',
+    bottom: 100,
+    right: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  filtersWrapper: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    right: 20,
+  },
+  filtersContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  filtersHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  filtersTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text,
+    marginLeft: 6,
+  },
+  filtersRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  filterButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderRadius: 20,
+    marginHorizontal: 2,
+  },
+  filterText: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 4,
   },
 });
