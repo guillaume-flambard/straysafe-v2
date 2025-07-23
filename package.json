@@ -1,12 +1,31 @@
 {
-  "name": "expo-app",
+  "name": "straysafe-v2",
   "main": "expo-router/entry",
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "description": "A React Native app for tracking and managing stray dogs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guillaume-flambard/straysafe-v2.git"
+  },
+  "keywords": [
+    "react-native",
+    "expo",
+    "typescript",
+    "supabase",
+    "stray-dogs",
+    "animal-welfare"
+  ],
+  "author": "Guillaume Flambard",
+  "license": "MIT",
   "scripts": {
     "start": "expo start --clear --scheme straysafe",
+    "dev": "expo start --clear --scheme straysafe",
     "android": "expo start --android --clear --scheme straysafe",
     "ios": "expo start --ios --clear --scheme straysafe",
-    "web": "expo start --web --clear"
+    "web": "expo start --web --clear",
+    "build": "eas build",
+    "submit": "eas submit",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",

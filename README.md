@@ -2,89 +2,222 @@
 
 A React Native app for tracking and managing stray dogs, built with Expo, Supabase, and TypeScript.
 
-## Features
+## ✨ Features
 
-- 🐕 Dog tracking and management
-- 📱 Cross-platform (iOS, Android, Web)
-- 🔐 User authentication and role-based permissions
-- 📍 Location-based services
-- 💬 Messaging system
-- 📊 Event logging and medical records
-- 🎯 Real-time updates
+- 🐕 **Dog Management** - Track, register, and manage stray dog profiles
+- 📱 **Cross-Platform** - iOS, Android, and Web support
+- 🔐 **Authentication** - Secure user auth with role-based permissions
+- 📍 **Location Services** - GPS tracking and location-based features
+- 💬 **Real-time Messaging** - Communication between users and volunteers
+- 🏥 **Medical Records** - Track medical events and health status
+- 📊 **Event Logging** - Comprehensive timeline of dog-related activities
+- 🔔 **Push Notifications** - Real-time updates and alerts
+- 🎨 **Modern UI** - Clean, intuitive interface with dark/light themes
+- 🔒 **Privacy Controls** - User privacy settings and data management
 
-## Setup
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js 18+ and npm/yarn
-- Expo CLI: `npm install -g @expo/cli`
-- Supabase account
+- Node.js 18+ 
+- [Bun](https://bun.sh) (recommended) or npm
+- [Expo CLI](https://docs.expo.dev/get-started/installation/): `npm install -g @expo/cli`
+- [Supabase](https://supabase.com) account
 
-### Database Setup
+### Installation
 
-1. Create a new project on [Supabase](https://supabase.com)
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/guillaume-flambard/straysafe-v2.git
+   cd straysafe-v2
+   ```
 
-2. Copy your project URL and anon key from the Supabase dashboard
+2. **Install dependencies**
+   ```bash
+   bun install
+   # or npm install
+   ```
 
-3. Create a `.env` file from the example:
+3. **Environment Setup**
    ```bash
    cp .env.example .env
    ```
-
-4. Update the `.env` file with your Supabase credentials:
-   ```
+   
+   Update `.env` with your Supabase credentials:
+   ```env
    EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
    EXPO_PUBLIC_SUPABASE_KEY=your-anon-key
    ```
 
-5. Set up the database schema by running the SQL in `supabase/schema.sql` in the Supabase SQL editor
+4. **Database Setup**
+   - Create a new Supabase project
+   - Run migrations: `supabase/migrations/*.sql` (in order)
+   - Seed with test data: `bun run seed` (if available)
 
-6. Seed the database with sample data by running the SQL in `supabase/seed.sql`
-
-### Installation
-
-1. Clone the repository
-2. Install dependencies:
+5. **Start Development Server**
    ```bash
-   npm install
-   ```
-3. Start the development server:
-   ```bash
-   npm start
+   bun run start
+   # or npm start
    ```
 
-### Demo Login
+6. **Demo Credentials**
+   ```
+   Email: admin@straysafe.org
+   Password: password
+   ```
 
-After seeding the database, you can use these demo credentials:
-- **Email**: admin@straysafe.org  
-- **Password**: password
-
-## Project Structure
+## 📁 Project Structure
 
 ```
-├── app/                 # Expo Router pages
-├── components/          # Reusable UI components
-├── constants/           # App constants (colors, etc.)
-├── hooks/              # Custom React hooks and stores
-├── lib/                # Third-party library configurations
-├── supabase/           # Database schema and seed files
-└── types/              # TypeScript type definitions
+straysafe-v2/
+├── app/                    # Expo Router pages & navigation
+│   ├── (auth)/            # Authentication screens
+│   ├── (tabs)/            # Main tab navigation
+│   ├── chat/              # Messaging interface
+│   ├── settings/          # User settings
+│   └── ...
+├── components/             # Reusable UI components
+├── hooks/                  # Custom React hooks & state management
+├── lib/                    # Third-party configurations (Supabase, tRPC)
+├── services/               # Business logic & API services
+├── supabase/              # Database schema & migrations
+│   ├── migrations/        # Database migrations
+│   └── dev-scripts/       # Development utilities
+├── types/                  # TypeScript definitions
+├── utils/                  # Helper functions
+└── constants/             # App constants
 ```
 
-## Database Schema
+## 🛠 Development
 
-The app uses Supabase with the following main tables:
-- `users` - User profiles and authentication
-- `locations` - Geographic locations  
-- `dogs` - Dog records and information
-- `events` - Dog-related events (medical, location, status updates)
-- `messages` - User messaging system
-- `conversations` - Message threads
+### Available Scripts
 
-## Technologies
+```bash
+bun run start          # Start Expo development server
+bun run android        # Start on Android
+bun run ios           # Start on iOS
+bun run web           # Start web version
+```
 
-- **Frontend**: React Native, Expo Router, TypeScript
-- **Backend**: Supabase (PostgreSQL, Auth, Real-time)
-- **State Management**: React Query, Context API
-- **Styling**: React Native StyleSheet
-- **Icons**: Lucide React Native
+### Code Quality
+
+- **TypeScript** - Full type safety
+- **ESLint** - Code linting (if configured)
+- **Git Hooks** - Pre-commit checks (if configured)
+
+### Branch Strategy
+
+- `main` - Production-ready code
+- `feature/*` - Feature development
+- `connect-database` - Database integration
+- `implement-signup` - Authentication features
+
+## 🗄 Database Schema
+
+### Core Tables
+- **users** - User authentication & profiles
+- **profiles** - Extended user information & privacy settings
+- **locations** - Geographic locations & regions
+- **dogs** - Dog records with medical & status info
+- **dog_events** - Timeline of dog-related activities
+- **conversations** - Message threads between users
+- **messages** - Individual messages with real-time sync
+- **notifications** - Push notification records
+
+### Key Features
+- **Row Level Security (RLS)** - Data access control
+- **Real-time subscriptions** - Live data updates
+- **File storage** - Image uploads for dogs & users
+- **Full-text search** - Advanced search capabilities
+
+## 🏗 Tech Stack
+
+### Frontend
+- **React Native** - Mobile framework
+- **Expo** - Development platform & deployment
+- **TypeScript** - Type safety
+- **Expo Router** - File-based navigation
+- **@expo/vector-icons** - Icon library
+- **React Query** - Server state management
+
+### Backend & Database
+- **Supabase** - Backend-as-a-Service
+  - PostgreSQL database
+  - Authentication & user management
+  - Real-time subscriptions
+  - File storage
+  - Row Level Security
+
+### Development Tools
+- **Bun** - Package manager & runtime
+- **tRPC** - Type-safe API layer
+- **Zustand** - Client state management
+
+## 🚢 Deployment
+
+### Expo Application Services (EAS)
+
+1. **Setup EAS CLI**
+   ```bash
+   npm install -g eas-cli
+   eas login
+   ```
+
+2. **Build for Production**
+   ```bash
+   eas build --platform all
+   ```
+
+3. **Submit to App Stores**
+   ```bash
+   eas submit --platform all
+   ```
+
+### Web Deployment
+
+```bash
+bun run web
+# Build static files for hosting
+```
+
+## 🧪 Testing
+
+- Manual testing workflows in development
+- Database testing with Supabase local development
+- Cross-platform testing on iOS/Android/Web
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow TypeScript best practices
+- Use existing component patterns
+- Maintain database migrations properly
+- Test on multiple platforms
+- Update documentation for new features
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- 📧 Email: support@straysafe.org
+- 🐛 Issues: [GitHub Issues](https://github.com/guillaume-flambard/straysafe-v2/issues)
+- 📖 Documentation: [Project Wiki](https://github.com/guillaume-flambard/straysafe-v2/wiki)
+
+## 🙏 Acknowledgments
+
+- Built with ❤️ for stray animal welfare
+- Powered by [Expo](https://expo.dev) & [Supabase](https://supabase.com)
+- Icons by [@expo/vector-icons](https://icons.expo.fyi)
+
+---
+
+**Made with 🐕 for helping stray animals find safe homes**
