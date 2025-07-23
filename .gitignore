@@ -212,3 +212,4 @@ fastlane/test_output
 
 # Supabase
 supabase/.temp/
+/lib/generated/prisma
