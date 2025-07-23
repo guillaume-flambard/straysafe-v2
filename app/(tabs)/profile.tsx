@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Image, ScrollView, Alert, Pressable, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/hooks/auth-store';
 import { supabase } from '@/lib/supabase';
 import Colors from '@/constants/colors';
@@ -31,6 +31,15 @@ export default function ProfileScreen() {
     fetchUserProfile();
   }, [user]);
 
+  // Refresh profile when screen comes into focus (e.g., coming back from settings)
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user) {
+        fetchUserProfile();
+      }
+    }, [user])
+  );
+
   const fetchUserProfile = async () => {
     try {
       setLoading(true);
@@ -52,8 +61,8 @@ export default function ProfileScreen() {
         const basicProfile = {
           id: user.id,
           email: user.email || '',
-          full_name: user.user_metadata?.full_name,
-          avatar_url: user.user_metadata?.avatar_url,
+          full_name: (user as any).user_metadata?.full_name,
+          avatar_url: (user as any).user_metadata?.avatar_url,
           created_at: new Date().toISOString()
         };
         setProfile(basicProfile);
@@ -65,8 +74,8 @@ export default function ProfileScreen() {
       const fallbackProfile = {
         id: user.id,
         email: user.email || '',
-        full_name: user.user_metadata?.full_name,
-        avatar_url: user.user_metadata?.avatar_url,
+        full_name: (user as any).user_metadata?.full_name,
+        avatar_url: (user as any).user_metadata?.avatar_url,
         created_at: new Date().toISOString()
       };
       setProfile(fallbackProfile);

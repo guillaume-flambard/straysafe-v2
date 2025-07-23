@@ -239,12 +239,6 @@ export default function ChatScreen() {
                 <Image 
                   source={{ uri: message.image_url }} 
                   style={styles.messageImage}
-                  resizeMode="cover"
-                  cachePolicy="memory-disk"
-                  recyclingKey={message.id}
-                  transition={200}
-                  placeholder="Loading..."
-                  placeholderContentFit="cover"
                 />
               </View>
             )}

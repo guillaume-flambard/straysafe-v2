@@ -191,6 +191,9 @@ class NotificationService {
   }): Promise<void> {
     const notificationParams: MessageNotificationParams = {
       type: 'new_message',
+      conversationId: params.conversationId,
+      senderId: params.senderId,
+      senderName: params.senderName,
       recipientUserIds: params.recipientUserIds,
       title: params.conversationTitle || `Message from ${params.senderName}`,
       body: params.message.length > 100 
@@ -216,6 +219,9 @@ class NotificationService {
   }): Promise<void> {
     const notificationParams: ConversationNotificationParams = {
       type: 'conversation_invite',
+      conversationId: params.conversationId,
+      inviterId: params.inviterId,
+      inviterName: params.inviterName,
       recipientUserIds: params.recipientUserIds,
       title: 'New conversation invitation',
       body: `${params.inviterName} invited you to "${params.conversationTitle}"`,
@@ -251,6 +257,9 @@ class NotificationService {
 
     const notificationParams: DogNotificationParams = {
       type: 'dog_discussion_update',
+      conversationId: params.conversationId,
+      dogId: params.dogId,
+      dogName: params.dogName,
       recipientUserIds: params.recipientUserIds,
       title: titles[params.updateType],
       body: bodies[params.updateType],

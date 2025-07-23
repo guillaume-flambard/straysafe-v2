@@ -36,10 +36,15 @@ export default function Index() {
   if (user) {
     console.log('Index: Redirecting to tabs');
     return <Redirect href="/(tabs)" />;
-  } else if (session && !user) {
-    // User has auth session but no profile - redirect to register to complete profile
-    console.log('Index: User has session but no profile, redirecting to register');
-    return <Redirect href="/(auth)/register" />;
+  } else if (session) {
+    // User has auth session but auth store is still loading/creating profile
+    // Show loading while auth store processes the session
+    console.log('Index: User has session, waiting for profile to load...');
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background }}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
   } else {
     console.log('Index: Redirecting to login');
     return <Redirect href="/(auth)/login" />;

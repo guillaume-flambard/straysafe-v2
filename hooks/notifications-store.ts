@@ -13,6 +13,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -40,8 +42,8 @@ export function useNotifications() {
     }
   });
 
-  const notificationListener = useRef<Notifications.Subscription>();
-  const responseListener = useRef<Notifications.Subscription>();
+  const notificationListener = useRef<Notifications.Subscription | null>(null);
+  const responseListener = useRef<Notifications.Subscription | null>(null);
 
   // Register for push notifications
   const registerForPushNotifications = async (): Promise<string | null> => {
@@ -274,12 +276,14 @@ export function useNotifications() {
     initializeNotifications();
 
     // Listen for notifications received while app is running
-    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+    notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
       setState(prev => ({ ...prev, notification }));
     });
 
     // Listen for notification responses (user taps notification)
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(handleNotificationResponse);
+    responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
+      handleNotificationResponse(response);
+    });
 
     return () => {
       if (notificationListener.current) {

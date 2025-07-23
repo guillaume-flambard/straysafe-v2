@@ -336,7 +336,7 @@ export function useMessages() {
       if (!participantRows || participantRows.length === 0) return;
 
       const recipientUserIds = participantRows.map(p => p.user_id);
-      const senderName = user.user_metadata?.full_name || user.email || 'Someone';
+      const senderName = (user as any).user_metadata?.full_name || user.email || 'Someone';
       
       // Send notification (simplified - just log for now since push notifications need production build)
       console.log(`📱 Would send notification to ${recipientUserIds.length} users:`, {

@@ -10,6 +10,7 @@ export const [AuthContext, useAuth] = createContextHook(() => {
   const [initialized, setInitialized] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [profileAttempted, setProfileAttempted] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -63,19 +64,36 @@ export const [AuthContext, useAuth] = createContextHook(() => {
   }, []);
 
   const loadUserProfile = async (supabaseUser: SupabaseUser) => {
-    // Prevent concurrent profile loading
-    if (isLoadingProfile) {
-      console.log('Profile loading already in progress, skipping...');
+    // Prevent concurrent profile loading or duplicate attempts
+    if (isLoadingProfile || profileAttempted === supabaseUser.id) {
+      console.log('Profile loading already in progress or attempted, skipping...');
       return;
     }
     
     console.log('Loading profile for user:', supabaseUser.id);
     setIsLoadingProfile(true);
+    setProfileAttempted(supabaseUser.id);
+    
+    // Create basic user helper function
+    const createBasicUser = () => {
+      const basicUser: User = {
+        id: supabaseUser.id,
+        email: supabaseUser.email || '',
+        name: (supabaseUser as any).user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
+        role: 'viewer' as UserRole,
+        locationId: null,
+        avatar: (supabaseUser as any).user_metadata?.avatar_url || null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setUser(basicUser);
+      return basicUser;
+    };
     
     try {
-      // Add timeout to the query
+      // Try to fetch profile with shorter timeout to prevent hanging
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Profile query timeout')), 5000);
+        setTimeout(() => reject(new Error('Profile query timeout')), 2000);
       });
       
       const queryPromise = supabase
@@ -86,15 +104,8 @@ export const [AuthContext, useAuth] = createContextHook(() => {
       
       const { data: profile, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
-      console.log('Profile query completed:', { 
-        hasProfile: !!profile, 
-        errorCode: error?.code 
-      });
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('❌ Profile query error:', error);
-        setUser(null);
-      } else if (profile) {
+      if (profile) {
+        // Successfully found database profile
         const userProfile: User = {
           id: profile.id,
           email: profile.email,
@@ -105,20 +116,17 @@ export const [AuthContext, useAuth] = createContextHook(() => {
           createdAt: profile.created_at,
           updatedAt: profile.updated_at,
         };
-        console.log('Profile loaded successfully:', userProfile.name);
+        console.log('✅ Profile loaded from database:', userProfile.name);
         setUser(userProfile);
       } else {
-        console.log('No profile found - redirect to complete registration');
-        setUser(null);
+        // No profile found - create basic user
+        console.log('📝 No database profile, creating basic user');
+        createBasicUser();
       }
     } catch (error: any) {
-      console.error('Failed to load user profile:', error);
-      if (error?.message === 'Profile query timeout') {
-        console.error('Query timed out, will retry...');
-        // Don't set user to null on timeout - let it retry
-        return;
-      }
-      setUser(null);
+      // Any error (timeout, network, etc.) - create basic user
+      console.log('⚠️ Profile query failed, using basic user:', error.message);
+      createBasicUser();
     } finally {
       setInitialized(true);
       setIsLoadingProfile(false);

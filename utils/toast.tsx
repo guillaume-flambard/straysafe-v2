@@ -1,19 +1,110 @@
-import React from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Text, Animated, StyleSheet } from 'react-native';
 import Colors from '@/constants/colors';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
-// Simple toast implementation that's React 19 compatible
-export const showToast = (message: string, type: ToastType = 'info') => {
-  // Simple console output for development
-  console.log(`🍞 Toast [${type.toUpperCase()}]: ${message}`);
-};
+interface ToastState {
+  visible: boolean;
+  message: string;
+  type: ToastType;
+  opacity: Animated.Value;
+}
 
-// Simple non-animated toast component
-export const ToastComponent: React.FC = () => {
-  // Return null to avoid React 19 issues
-  return null;
+class ToastManager {
+  private static instance: ToastManager;
+  private toastRef: ToastComponent | null = null;
+
+  static getInstance(): ToastManager {
+    if (!ToastManager.instance) {
+      ToastManager.instance = new ToastManager();
+    }
+    return ToastManager.instance;
+  }
+
+  setToastRef(ref: ToastComponent | null) {
+    this.toastRef = ref;
+  }
+
+  show(message: string, type: ToastType = 'info') {
+    console.log(`🍞 Toast [${type.toUpperCase()}]: ${message}`);
+    if (this.toastRef) {
+      this.toastRef.show(message, type);
+    }
+  }
+}
+
+interface ToastComponentProps {}
+
+export class ToastComponent extends React.Component<ToastComponentProps, ToastState> {
+  constructor(props: ToastComponentProps) {
+    super(props);
+    this.state = {
+      visible: false,
+      message: '',
+      type: 'info',
+      opacity: new Animated.Value(0),
+    };
+  }
+
+  componentDidMount() {
+    ToastManager.getInstance().setToastRef(this);
+  }
+
+  componentWillUnmount() {
+    ToastManager.getInstance().setToastRef(null);
+  }
+
+  show = (message: string, type: ToastType) => {
+    this.setState({
+      message,
+      type,
+      visible: true,
+    });
+
+    Animated.sequence([
+      Animated.timing(this.state.opacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(3000),
+      Animated.timing(this.state.opacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      this.setState({ visible: false });
+    });
+  };
+
+  render() {
+    const { visible, message, type, opacity } = this.state;
+
+    if (!visible) {
+      return null;
+    }
+
+    return (
+      <Animated.View
+        style={[
+          styles.toast,
+          type === 'success' && styles.toastSuccess,
+          type === 'error' && styles.toastError,
+          type === 'warning' && styles.toastWarning,
+          type === 'info' && styles.toastInfo,
+          { opacity },
+        ]}
+      >
+        <Text style={styles.toastText}>{message}</Text>
+      </Animated.View>
+    );
+  }
+}
+
+export const showToast = (message: string, type: ToastType = 'info') => {
+  ToastManager.getInstance().show(message, type);
 };
 
 const styles = StyleSheet.create({

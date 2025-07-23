@@ -30,10 +30,7 @@ function RootLayoutNav() {
       <Stack.Screen name="chat/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="new-conversation" options={{ headerShown: false }} />
       <Stack.Screen name="notification-settings" options={{ headerShown: false }} />
-      <Stack.Screen name="settings/account" options={{ headerShown: false }} />
-      <Stack.Screen name="settings/privacy" options={{ headerShown: false }} />
-      <Stack.Screen name="settings/location" options={{ headerShown: false }} />
-      <Stack.Screen name="settings/help" options={{ headerShown: false }} />
+      <Stack.Screen name="settings" options={{ headerShown: false }} />
     </Stack>
   );
 }

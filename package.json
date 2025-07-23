@@ -3,9 +3,10 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "npx expo start -c",
-    "android": "expo run:android",
-    "ios": "npx expo run:ios"
+    "start": "expo start --clear --scheme straysafe",
+    "android": "expo start --android --clear --scheme straysafe",
+    "ios": "expo start --ios --clear --scheme straysafe",
+    "web": "expo start --web --clear"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",

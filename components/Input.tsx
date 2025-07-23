@@ -31,9 +31,9 @@ export default function Input({
         <TextInput
           style={[
             styles.input,
-            error && styles.inputError,
-            leftIcon && styles.inputWithLeftIcon,
-            rightIcon && styles.inputWithRightIcon,
+            error ? styles.inputError : null,
+            leftIcon ? styles.inputWithLeftIcon : null,
+            rightIcon ? styles.inputWithRightIcon : null,
             style
           ]}
           placeholderTextColor={Colors.placeholder}

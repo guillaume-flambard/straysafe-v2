@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Pressable, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, User, Mail, Phone, MapPin, FileText, Camera, Save } from 'lucide-react-native';
+import { ArrowLeft, User, Mail, MapPin, FileText, Camera, Save } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/hooks/auth-store';
@@ -16,9 +16,13 @@ interface UserProfile {
   email: string;
   full_name?: string;
   avatar_url?: string;
-  phone?: string;
-  location?: string;
   bio?: string;
+  location?: string;
+  location_id?: string;
+  role?: string;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export default function AccountSettingsScreen() {
@@ -61,8 +65,8 @@ export default function AccountSettingsScreen() {
         const basicProfile = {
           id: user.id,
           email: user.email || '',
-          full_name: user.user_metadata?.full_name || '',
-          avatar_url: user.user_metadata?.avatar_url,
+          full_name: (user as any).user_metadata?.full_name || '',
+          avatar_url: (user as any).user_metadata?.avatar_url,
         };
         setProfile(basicProfile);
       }
@@ -86,9 +90,8 @@ export default function AccountSettingsScreen() {
           id: user.id,
           email: profile.email,
           full_name: profile.full_name,
-          phone: profile.phone,
-          location: profile.location,
           bio: profile.bio,
+          location: profile.location,
           avatar_url: profile.avatar_url,
           updated_at: new Date().toISOString(),
         });
@@ -96,6 +99,11 @@ export default function AccountSettingsScreen() {
       if (error) throw error;
       
       showToast('Profile updated successfully! ✅', 'success');
+      
+      // Navigate back after successful save (wait for toast to show)
+      setTimeout(() => {
+        router.back();
+      }, 2000);
     } catch (error) {
       console.error('Error updating profile:', error);
       showToast('Failed to update profile', 'error');
@@ -170,16 +178,18 @@ export default function AccountSettingsScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={Colors.text} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Account Settings</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView 
+          style={styles.content} 
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContainer}
+        >
         {/* Profile Picture */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Profile Picture</Text>
@@ -230,19 +240,10 @@ export default function AccountSettingsScreen() {
           />
           
           <Input
-            label="Phone Number"
-            value={profile.phone || ''}
-            onChangeText={(text) => updateField('phone', text)}
-            placeholder="Enter your phone number"
-            keyboardType="phone-pad"
-            leftIcon={<Phone size={20} color={Colors.textLight} />}
-          />
-          
-          <Input
             label="Location"
             value={profile.location || ''}
             onChangeText={(text) => updateField('location', text)}
-            placeholder="Enter your location"
+            placeholder="Enter your address or location"
             leftIcon={<MapPin size={20} color={Colors.textLight} />}
           />
         </View>
@@ -270,10 +271,11 @@ export default function AccountSettingsScreen() {
           leftIcon={<Save size={16} color="white" />}
           style={styles.saveButton}
         />
-      </ScrollView>
+        </ScrollView>
+      </TouchableWithoutFeedback>
 
       <ToastComponent />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -306,32 +308,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 60,
-    paddingBottom: 16,
-    backgroundColor: Colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 8,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: Colors.text,
-    flex: 1,
-    textAlign: 'center',
-  },
-  headerSpacer: {
-    width: 40,
-  },
   content: {
     flex: 1,
+  },
+  scrollContainer: {
+    paddingTop: 20,
+    paddingBottom: 100,
   },
   section: {
     padding: 20,
