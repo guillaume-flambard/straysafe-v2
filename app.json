@@ -70,7 +70,6 @@
         {
           "icon": "./assets/images/icon.png",
           "color": "#3498db",
-          "sounds": ["./assets/sounds/notification.wav"],
           "mode": "production"
         }
       ],

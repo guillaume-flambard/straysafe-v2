@@ -175,24 +175,9 @@ Thumbs.db
 build/
 dist/
 
-# iOS
-ios/build/
-ios/Pods/
-ios/*.xcworkspace/xcuserdata/
-ios/*.xcodeproj/xcuserdata/
-ios/*.xcodeproj/project.xcworkspace/xcuserdata/
-# Keep ios/Podfile.lock committed for reproducible builds
-
-# Android
-android/app/build/
-android/build/
-android/.gradle/
-android/captures/
-android/gradle/
-android/gradlew
-android/gradlew.bat
-android/local.properties
-*.keystore
+# Native (CNG/Prebuild generates these)
+ios/
+android/
 
 # Fastlane
 fastlane/report.xml

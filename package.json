@@ -70,7 +70,7 @@
     "react-native-gesture-handler": "~2.24.0",
     "react-native-is-edge-to-edge": "^1.2.1",
     "react-native-maps": "1.20.1",
-    "react-native-reanimated": "^3.19.0",
+    "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
     "react-native-svg": "15.11.2",
@@ -87,6 +87,27 @@
     "@expo/ngrok": "^4.1.0",
     "@types/react": "~19.0.10",
     "typescript": "~5.8.3"
+  },
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "@hono/trpc-server",
+          "@nkzw/create-context-hook", 
+          "@trpc/client",
+          "@trpc/react-query",
+          "@trpc/server",
+          "ajv",
+          "base64-arraybuffer",
+          "eslint",
+          "hono",
+          "react-native-is-edge-to-edge",
+          "supabase",
+          "superjson"
+        ],
+        "listUnknownPackages": false
+      }
+    }
   },
   "private": true
 }

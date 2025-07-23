@@ -7,17 +7,20 @@ import { DogEvent } from '@/types';
 import Colors from '@/constants/colors';
 import StatusBadge from '@/components/StatusBadge';
 import EventCard from '@/components/EventCard';
+import InterestButton from '@/components/InterestButton';
+import DogComments from '@/components/DogComments';
 import Button from '@/components/Button';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function DogProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { getDog, getDogEvents, addEvent } = useDogs();
   const { user, hasPermission } = useAuth();
-  const [activeTab, setActiveTab] = useState<'info' | 'timeline'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'timeline' | 'comments'>('info');
+  const queryClient = useQueryClient();
 
   // Fetch locations from database
   const { data: locations = [] } = useQuery({
@@ -30,6 +33,128 @@ export default function DogProfileScreen() {
       
       if (error) throw error;
       return data;
+    }
+  });
+
+  // Fetch user interests for this dog
+  const { data: userInterests = [] } = useQuery({
+    queryKey: ['userInterests', id, user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from('user_dog_interests')
+        .select('interest_type')
+        .eq('user_id', user.id)
+        .eq('dog_id', id);
+      
+      if (error) throw error;
+      return data.map(item => item.interest_type);
+    },
+    enabled: !!user?.id
+  });
+
+  // Fetch comments for this dog
+  const { data: comments = [], isLoading: commentsLoading } = useQuery({
+    queryKey: ['dogComments', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('dog_comments')
+        .select(`
+          id,
+          content,
+          is_public,
+          created_at,
+          updated_at,
+          profiles:user_id (
+            id,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('dog_id', id)
+        .eq('is_public', true)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Interest mutations
+  const interestMutation = useMutation({
+    mutationFn: async ({ interestType, isActive, notes }: { interestType: string, isActive: boolean, notes?: string }) => {
+      if (isActive) {
+        const { data, error } = await supabase
+          .from('user_dog_interests')
+          .upsert({
+            user_id: user!.id,
+            dog_id: id,
+            interest_type: interestType,
+            notes
+          });
+        if (error) throw error;
+        return data;
+      } else {
+        const { error } = await supabase
+          .from('user_dog_interests')
+          .delete()
+          .eq('user_id', user!.id)
+          .eq('dog_id', id)
+          .eq('interest_type', interestType);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userInterests', id, user?.id] });
+    }
+  });
+
+  // Comment mutations
+  const addCommentMutation = useMutation({
+    mutationFn: async (content: string) => {
+      const { data, error } = await supabase
+        .from('dog_comments')
+        .insert({
+          dog_id: id,
+          user_id: user!.id,
+          content,
+          is_public: true
+        })
+        .select(`
+          id,
+          content,
+          is_public,
+          created_at,
+          updated_at,
+          profiles:user_id (
+            id,
+            full_name,
+            avatar_url
+          )
+        `)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dogComments', id] });
+    }
+  });
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: async (commentId: string) => {
+      const { error } = await supabase
+        .from('dog_comments')
+        .delete()
+        .eq('id', commentId)
+        .eq('user_id', user!.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dogComments', id] });
     }
   });
   
@@ -150,6 +275,17 @@ export default function DogProfileScreen() {
                 </View>
               )}
             </View>
+
+            {user && (
+              <InterestButton
+                dogId={id}
+                userInterests={userInterests}
+                onInterestChange={(interestType, isActive, notes) => {
+                  interestMutation.mutate({ interestType, isActive, notes });
+                }}
+                style={styles.interestButton}
+              />
+            )}
           </View>
           
           <View style={styles.tabsContainer}>
@@ -183,6 +319,22 @@ export default function DogProfileScreen() {
                 ]}
               >
                 Timeline
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.tab,
+                activeTab === 'comments' && styles.activeTab
+              ]}
+              onPress={() => setActiveTab('comments')}
+            >
+              <Text 
+                style={[
+                  styles.tabText,
+                  activeTab === 'comments' && styles.activeTabText
+                ]}
+              >
+                Comments ({comments.length})
               </Text>
             </Pressable>
           </View>
@@ -233,6 +385,18 @@ export default function DogProfileScreen() {
                 </View>
               </View>
             </View>
+          ) : activeTab === 'comments' ? (
+            <DogComments
+              dogId={id}
+              comments={comments}
+              onAddComment={async (content) => {
+                await addCommentMutation.mutateAsync(content);
+              }}
+              onDeleteComment={async (commentId) => {
+                await deleteCommentMutation.mutateAsync(commentId);
+              }}
+              isLoading={commentsLoading}
+            />
           ) : (
             <View style={styles.timelineContainer}>
               {hasPermission('volunteer') && (
@@ -355,6 +519,7 @@ const styles = StyleSheet.create({
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    marginBottom: 16,
   },
   tag: {
     backgroundColor: Colors.border,
@@ -367,6 +532,9 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 12,
     color: Colors.text,
+  },
+  interestButton: {
+    marginTop: 8,
   },
   tabsContainer: {
     flexDirection: 'row',
