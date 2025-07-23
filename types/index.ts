@@ -38,6 +38,7 @@ export interface Dog {
   mainImage?: string;
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
 }
 
 export interface DogEvent {
@@ -49,4 +50,5 @@ export interface DogEvent {
   date: string;
   createdBy: string;
   isPrivate: boolean;
+  createdAt: string;
 }
