@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, Image, ScrollView, Alert, Pressable, ActivityIn
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/hooks/auth-store';
 import { supabase } from '@/lib/supabase';
+import { resetOnboardingForUser } from '@/utils/onboarding';
 import Colors from '@/constants/colors';
 import Button from '@/components/Button';
 import { LogOut, Settings, HelpCircle, Bell, Shield, MapPin, ChevronRight, User } from 'lucide-react-native';
@@ -212,6 +213,40 @@ export default function ProfileScreen() {
           color={Colors.textLight}
           onPress={() => router.push('/settings/help')}
         />
+        {__DEV__ && (
+          <>
+            <ProfileOption 
+              icon={<Bell size={20} color={Colors.warning} />} 
+              title="Test Notifications" 
+              subtitle="Test push notification functionality" 
+              color={Colors.warning}
+              onPress={() => router.push('/notification-test')}
+            />
+            <ProfileOption 
+              icon={<HelpCircle size={20} color={Colors.secondary} />} 
+              title="Reset Onboarding" 
+              subtitle="Show onboarding tutorial again" 
+              color={Colors.secondary}
+              onPress={async () => {
+                if (user) {
+                  const success = await resetOnboardingForUser(user.id);
+                  if (success) {
+                    showToast('Onboarding reset! Restart the app to see it again.', 'success');
+                  } else {
+                    showToast('Failed to reset onboarding', 'error');
+                  }
+                }
+              }}
+            />
+            <ProfileOption 
+              icon={<User size={20} color={Colors.success} />} 
+              title="Test Users Manager" 
+              subtitle="Create and test different user roles" 
+              color={Colors.success}
+              onPress={() => router.push('/test-users')}
+            />
+          </>
+        )}
       </View>
       
       <Button

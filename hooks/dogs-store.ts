@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Dog, DogEvent, DogStatus } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './auth-store';
+import { sendDogDiscussionUpdate } from '@/utils/notifications';
 
 export const [DogsContext, useDogs] = createContextHook(() => {
   const { user } = useAuth();
@@ -205,7 +206,7 @@ export const [DogsContext, useDogs] = createContextHook(() => {
   };
 
   // Add a new event
-  const addEvent = (event: Omit<DogEvent, 'id' | 'createdAt'>) => {
+  const addEvent = async (event: Omit<DogEvent, 'id' | 'createdAt'>) => {
     if (!user) return null;
     
     createEventMutation.mutate(event);
@@ -216,6 +217,30 @@ export const [DogsContext, useDogs] = createContextHook(() => {
       if (statusMatch && statusMatch[1]) {
         const newStatus = statusMatch[1].toLowerCase() as DogStatus;
         updateDog(event.dogId, { status: newStatus });
+        
+        // Send notification for status change
+        const dog = getDog(event.dogId);
+        if (dog) {
+          try {
+            // Get all users who might be interested in this dog
+            const { data: interestedUsers } = await supabase
+              .from('profiles')
+              .select('id')
+              .neq('id', user.id);
+            
+            if (interestedUsers && interestedUsers.length > 0) {
+              await sendDogDiscussionUpdate({
+                conversationId: '', // We'll need to create or find dog discussion
+                dogId: dog.id,
+                dogName: dog.name,
+                updateType: 'status_change',
+                recipientUserIds: interestedUsers.map(u => u.id),
+              });
+            }
+          } catch (error) {
+            console.error('Error sending dog status notification:', error);
+          }
+        }
       }
     }
   };

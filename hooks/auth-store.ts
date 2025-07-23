@@ -97,7 +97,7 @@ export const [AuthContext, useAuth] = createContextHook(() => {
       });
       
       const queryPromise = supabase
-        .from('users')
+        .from('profiles')
         .select('*')
         .eq('id', supabaseUser.id)
         .single();
@@ -109,10 +109,10 @@ export const [AuthContext, useAuth] = createContextHook(() => {
         const userProfile: User = {
           id: profile.id,
           email: profile.email,
-          name: profile.name,
+          name: profile.full_name || profile.email?.split('@')[0] || 'User',
           role: profile.role as UserRole,
           locationId: profile.location_id,
-          avatar: profile.avatar,
+          avatar: profile.avatar_url,
           createdAt: profile.created_at,
           updatedAt: profile.updated_at,
         };

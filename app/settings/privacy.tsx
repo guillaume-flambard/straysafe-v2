@@ -39,30 +39,29 @@ export default function PrivacyScreen() {
     try {
       setLoading(true);
       
-      // TODO: Enable database integration when user_privacy_settings table is created
-      // For now, use default settings
-      console.log('Privacy settings loaded with defaults (database table not yet created)');
+      // Load privacy settings from database
+      const { data, error } = await supabase
+        .from('user_privacy_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
       
-      // Uncomment when database table is available:
-      // const { data, error } = await supabase
-      //   .from('user_privacy_settings')
-      //   .select('*')
-      //   .eq('user_id', user.id)
-      //   .single();
-      // 
-      // if (error && error.code !== 'PGRST116') {
-      //   throw error;
-      // }
-      // 
-      // if (data) {
-      //   setSettings({
-      //     profile_visibility: data.profile_visibility,
-      //     location_sharing: data.location_sharing,
-      //     activity_status: data.activity_status,
-      //     search_visibility: data.search_visibility,
-      //     data_analytics: data.data_analytics,
-      //   });
-      // }
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+      
+      if (data) {
+        setSettings({
+          profile_visibility: data.profile_visibility,
+          location_sharing: data.location_sharing,
+          activity_status: data.activity_status,
+          search_visibility: data.search_visibility,
+          data_analytics: data.data_analytics,
+        });
+        console.log('Privacy settings loaded from database:', data);
+      } else {
+        console.log('No privacy settings found, using defaults');
+      }
     } catch (error) {
       console.error('Error loading privacy settings:', error);
       showToast('Privacy settings loaded with defaults', 'info');
@@ -77,25 +76,23 @@ export default function PrivacyScreen() {
     try {
       setSaving(true);
       
-      // TODO: Enable database integration when user_privacy_settings table is created
-      // For now, just save to local state
-      console.log('Privacy settings saved locally:', settings);
+      // Save privacy settings to database
+      const { error } = await supabase
+        .from('user_privacy_settings')
+        .upsert({
+          user_id: user.id,
+          ...settings,
+          updated_at: new Date().toISOString(),
+        });
       
-      // Uncomment when database table is available:
-      // const { error } = await supabase
-      //   .from('user_privacy_settings')
-      //   .upsert({
-      //     user_id: user.id,
-      //     ...settings,
-      //     updated_at: new Date().toISOString(),
-      //   });
-      // 
-      // if (error) throw error;
+      if (error) throw error;
+      
+      console.log('Privacy settings saved to database:', settings);
       
       showToast('Privacy settings saved! 🔒', 'success');
     } catch (error) {
       console.error('Error saving privacy settings:', error);
-      showToast('Settings saved locally (database integration pending)', 'info');
+      showToast('Failed to save privacy settings', 'error');
     } finally {
       setSaving(false);
     }

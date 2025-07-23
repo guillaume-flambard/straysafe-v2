@@ -52,7 +52,7 @@ export function useNotifications() {
     // Check if running in Expo Go
     const isExpoGo = Constants?.appOwnership === 'expo';
     if (isExpoGo) {
-      console.warn('Push notifications are not supported in Expo Go. Use a development build for testing.');
+      // Silently fail in Expo Go without warning
       setState(prev => ({
         ...prev,
         error: 'Push notifications require a development build'
@@ -90,7 +90,7 @@ export function useNotifications() {
       }));
 
       if (finalStatus !== 'granted') {
-        showToast('Push notification permissions required for message alerts', 'warning');
+        // Silently fail without toast in development
         return null;
       }
       
@@ -105,7 +105,8 @@ export function useNotifications() {
         }));
       }
     } else {
-      showToast('Push notifications only work on physical devices', 'info');
+      // Silently handle simulator/emulator case
+      console.log('Push notifications only work on physical devices');
     }
 
     return token;
@@ -142,6 +143,9 @@ export function useNotifications() {
   // Initialize notifications
   const initializeNotifications = async () => {
     if (!user) return;
+    
+    // Prevent multiple initializations
+    if (state.loading || state.expoPushToken) return;
 
     setState(prev => ({ ...prev, loading: true, error: null }));
 

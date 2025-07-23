@@ -6,6 +6,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/hooks/auth-store';
 import { supabase } from '@/lib/supabase';
+import { uploadProfileImage } from '@/services/image-upload';
 import Colors from '@/constants/colors';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
@@ -142,11 +143,30 @@ export default function AccountSettingsScreen() {
     try {
       setUploading(true);
       
-      // For now, just update the local state with the URI
-      // In production, you'd upload to Supabase Storage
-      setProfile(prev => prev ? { ...prev, avatar_url: uri } : null);
+      // Upload image to Supabase Storage
+      const result = await uploadProfileImage(uri, user.id, {
+        compress: true,
+        maxWidth: 400,
+        maxHeight: 400,
+        quality: 0.8
+      });
       
-      showToast('Profile picture updated! Remember to save changes.', 'info');
+      if (result.success && result.url) {
+        // Update profile with new image URL
+        setProfile(prev => prev ? { ...prev, avatar_url: result.url } : null);
+        
+        // Also update in database immediately
+        const { error } = await supabase
+          .from('profiles')
+          .update({ avatar_url: result.url })
+          .eq('id', user.id);
+        
+        if (error) throw error;
+        
+        showToast('Profile picture updated successfully! ✅', 'success');
+      } else {
+        throw new Error(result.error || 'Upload failed');
+      }
     } catch (error) {
       console.error('Error uploading image:', error);
       showToast('Failed to upload image', 'error');

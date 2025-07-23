@@ -10,10 +10,10 @@ import Button from '@/components/Button';
 import { Camera, Check, X, Image as ImageIcon, MapPin, Upload, ChevronDown, Map } from 'lucide-react-native';
 import { showToast, ToastComponent } from '@/utils/toast';
 import { supabase } from '@/lib/supabase';
+import { uploadDogImage } from '@/services/image-upload';
 import { useQuery } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import * as FileSystem from 'expo-file-system';
 import MapView, { Marker } from 'react-native-maps';
 
 // Koh Phangan center coordinates  
@@ -104,55 +104,33 @@ export default function AddDogScreen() {
     }
   };
 
-  // Upload image to Supabase Storage
+  // Upload image to Supabase Storage using new service
   const uploadImage = async (uri: string): Promise<string | null> => {
+    if (!user) return null;
+    
     try {
       setIsUploadingImage(true);
       
-      // Generate unique filename
-      const fileExt = uri.split('.').pop();
-      const fileName = `dog_${Date.now()}.${fileExt}`;
-      const filePath = `dogs/${fileName}`;
-
-      // Read file as base64
-      const base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
+      const result = await uploadDogImage(uri, user.id, {
+        compress: true,
+        maxWidth: 1200,
+        maxHeight: 1200,
+        quality: 0.9
       });
-
-      // Upload to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from('dog-images')
-        .upload(filePath, decode(base64), {
-          contentType: `image/${fileExt}`,
-        });
-
-      if (error) {
-        console.error('Upload error:', error);
+      
+      if (result.success && result.url) {
+        console.log('✅ Dog image uploaded successfully:', result.url);
+        return result.url;
+      } else {
+        console.error('❌ Dog image upload failed:', result.error);
         return null;
       }
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('dog-images')
-        .getPublicUrl(filePath);
-
-      return publicUrl;
     } catch (error) {
       console.error('Failed to upload image:', error);
       return null;
     } finally {
       setIsUploadingImage(false);
     }
-  };
-
-  // Helper function to decode base64
-  const decode = (str: string): Uint8Array => {
-    const binaryString = atob(str);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes;
   };
 
   const requestPermissions = async () => {

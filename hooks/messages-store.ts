@@ -348,15 +348,15 @@ export function useMessages() {
         conversationTitle: conversation?.title,
       });
 
-      // Uncomment for actual push notifications in production:
-      // await sendMessageNotification({
-      //   conversationId,
-      //   senderId: user.id,
-      //   senderName,
-      //   message: messageContent,
-      //   recipientUserIds,
-      //   conversationTitle: conversation?.title,
-      // });
+      // Send actual push notifications
+      await sendMessageNotification({
+        conversationId,
+        senderId: user.id,
+        senderName,
+        message: messageContent,
+        recipientUserIds,
+        conversationTitle: conversation?.title,
+      });
 
     } catch (error) {
       console.error('Error sending message notifications:', error);
