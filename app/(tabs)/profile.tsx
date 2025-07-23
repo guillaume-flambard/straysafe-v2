@@ -154,24 +154,30 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.header}>
-        <Image 
-          source={{ 
-            uri: profile.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80' 
-          }} 
-          style={styles.avatar} 
-        />
-        <View style={styles.userInfo}>
-          <Text style={styles.name}>{profile.full_name || 'No name set'}</Text>
-          <Text style={styles.email}>{profile.email}</Text>
-          {profile.bio && (
-            <Text style={styles.bio} numberOfLines={2}>{profile.bio}</Text>
-          )}
-          <View style={styles.roleBadge}>
-            <Text style={styles.roleText}>Member</Text>
+          <View style={styles.header}>
+            <Image 
+              source={{ 
+                uri: profile.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80' 
+              }} 
+              style={styles.avatar} 
+            />
+            <View style={styles.userInfo}>
+              <Text style={styles.name}>{profile.full_name || 'No name set'}</Text>
+              <Text style={styles.email}>{profile.email}</Text>
+              {profile.bio && (
+                <Text style={styles.bio} numberOfLines={2}>{profile.bio}</Text>
+              )}
+              {profile.location && (
+                <View style={styles.locationDisplay}>
+                  <MapPin size={14} color={Colors.textLight} />
+                  <Text style={styles.locationDisplayText}>{profile.location}</Text>
+                </View>
+              )}
+              <View style={styles.roleBadge}>
+                <Text style={styles.roleText}>Member</Text>
+              </View>
+            </View>
           </View>
-        </View>
-      </View>
       
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>
@@ -194,17 +200,6 @@ export default function ProfileScreen() {
           subtitle="Control your data and security settings" 
           color={Colors.success}
           onPress={() => router.push('/settings/privacy')}
-        />
-      </View>
-      
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Location</Text>
-        <ProfileOption 
-          icon={<MapPin size={20} color={Colors.danger} />} 
-          title={profile.location || 'Set your location'} 
-          subtitle="Manage your location settings" 
-          color={Colors.danger}
-          onPress={() => router.push('/settings/location')}
         />
       </View>
       
@@ -376,5 +371,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     color: Colors.textLight,
+  },
+  locationDisplay: {
+    flexDirection: 'row', 
+    alignItems: 'center',
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  locationDisplayText: {
+    fontSize: 12,
+    color: Colors.textLight,
+    marginLeft: 6,
   },
 });
