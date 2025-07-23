@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, Dimensions, Platform, Pressable, Modal, ScrollV
 import { useDogs } from '@/hooks/dogs-store';
 import { useRouter } from 'expo-router';
 import Colors from '@/constants/colors';
-import { MapPin, X, Filter, Heart, Home, Users } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import StatusBadge from '@/components/StatusBadge';
 import { Dog, DogStatus } from '@/types';
 import MapView, { Marker } from 'react-native-maps';
@@ -49,14 +49,14 @@ const CustomMarker = ({ dog, onPress }: { dog: Dog; onPress: () => void }) => {
 
   const getMarkerIcon = () => {
     switch (dog.status) {
-      case 'stray': return Heart;
-      case 'fostered': return Users;
-      case 'adopted': return Home;
-      default: return MapPin;
+      case 'stray': return 'heart';
+      case 'fostered': return 'people';
+      case 'adopted': return 'home';
+      default: return 'location';
     }
   };
 
-  const IconComponent = getMarkerIcon();
+  const iconName = getMarkerIcon();
 
   return (
     <Pressable
@@ -64,7 +64,7 @@ const CustomMarker = ({ dog, onPress }: { dog: Dog; onPress: () => void }) => {
       onPress={onPress}
     >
       <View style={[styles.markerContent, { backgroundColor: getMarkerColor() }]}>
-        <IconComponent size={16} color="white" />
+        <Ionicons name={iconName as any} size={16} color="white" />
       </View>
     </Pressable>
   );
@@ -78,20 +78,20 @@ const MapFilters = ({
   activeFilters: Set<DogStatus>; 
   onFilterChange: (status: DogStatus) => void; 
 }) => {
-  const filters: { status: DogStatus; label: string; color: string; icon: any }[] = [
-    { status: 'stray', label: 'Stray', color: Colors.danger, icon: Heart },
-    { status: 'fostered', label: 'Fostered', color: Colors.primary, icon: Users },
-    { status: 'adopted', label: 'Adopted', color: Colors.success, icon: Home },
+  const filters: { status: DogStatus; label: string; color: string; iconName: string }[] = [
+    { status: 'stray', label: 'Stray', color: Colors.danger, iconName: 'heart' },
+    { status: 'fostered', label: 'Fostered', color: Colors.primary, iconName: 'people' },
+    { status: 'adopted', label: 'Adopted', color: Colors.success, iconName: 'home' },
   ];
 
   return (
     <View style={styles.filtersContainer}>
       <View style={styles.filtersHeader}>
-        <Filter size={16} color={Colors.text} />
+        <Ionicons name="funnel" size={16} color={Colors.text} />
         <Text style={styles.filtersTitle}>Filters</Text>
       </View>
       <View style={styles.filtersRow}>
-        {filters.map(({ status, label, color, icon: IconComponent }) => {
+        {filters.map(({ status, label, color, iconName }) => {
           const isActive = activeFilters.has(status);
           return (
             <Pressable
@@ -103,7 +103,8 @@ const MapFilters = ({
               ]}
               onPress={() => onFilterChange(status)}
             >
-              <IconComponent 
+              <Ionicons 
+                name={iconName as any}
                 size={14} 
                 color={isActive ? color : Colors.textLight} 
               />
@@ -195,7 +196,7 @@ const SimpleMap = ({
       {/* User Location Button */}
       {userLocation && (
         <Pressable style={styles.locationButton} onPress={centerOnUser}>
-          <MapPin size={20} color={Colors.primary} />
+          <Ionicons name="location" size={20} color={Colors.primary} />
         </Pressable>
       )}
     </View>
@@ -224,7 +225,7 @@ const DogModal = ({ dog, visible, onClose }: { dog: Dog | null, visible: boolean
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>{dog.name}</Text>
             <Pressable onPress={onClose} style={styles.closeButton}>
-              <X size={24} color={Colors.textLight} />
+              <Ionicons name="close" size={24} color={Colors.textLight} />
             </Pressable>
           </View>
           
@@ -249,7 +250,7 @@ const DogModal = ({ dog, visible, onClose }: { dog: Dog | null, visible: boolean
             
             {dog.lastSeen && dog.status === 'stray' && (
               <View style={styles.modalLastSeen}>
-                <MapPin size={14} color={Colors.textLight} />
+                <Ionicons name="location" size={14} color={Colors.textLight} />
                 <Text style={styles.modalLastSeenText}>
                   Last seen: {new Date(dog.lastSeen).toLocaleDateString()}
                   {dog.lastSeenLocation && ` at ${dog.lastSeenLocation}`}
@@ -325,7 +326,7 @@ export default function MapScreen() {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <MapPin size={48} color={Colors.primary} />
+        <Ionicons name="location" size={48} color={Colors.primary} />
         <Text style={styles.loadingText}>Loading dogs...</Text>
       </View>
     );

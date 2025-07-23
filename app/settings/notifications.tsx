@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, Switch } from 'react-native';
 import Colors from '@/constants/colors';
-import { Bell, MessageSquare, MapPin, Heart } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function NotificationsScreen() {
   const [pushNotifications, setPushNotifications] = useState(true);
@@ -48,7 +48,7 @@ export default function NotificationsScreen() {
         <Text style={styles.sectionTitle}>General Notifications</Text>
         
         <NotificationOption
-          icon={<Bell size={20} color={Colors.primary} />}
+          icon={<Ionicons name="notifications" size={20} color={Colors.primary} />}
           title="Push Notifications"
           description="Receive notifications on your device"
           value={pushNotifications}
@@ -56,7 +56,7 @@ export default function NotificationsScreen() {
         />
         
         <NotificationOption
-          icon={<MessageSquare size={20} color={Colors.secondary} />}
+          icon={<Ionicons name="chatbubble" size={20} color={Colors.secondary} />}
           title="Email Notifications"
           description="Receive updates via email"
           value={emailNotifications}
@@ -69,7 +69,7 @@ export default function NotificationsScreen() {
         <Text style={styles.sectionTitle}>Dog Updates</Text>
         
         <NotificationOption
-          icon={<Heart size={20} color={Colors.danger} />}
+          icon={<Ionicons name="heart" size={20} color={Colors.danger} />}
           title="Dog Status Changes"
           description="Get notified when a dog's status changes"
           value={dogUpdates}
@@ -78,7 +78,7 @@ export default function NotificationsScreen() {
         />
         
         <NotificationOption
-          icon={<MapPin size={20} color={Colors.warning} />}
+          icon={<Ionicons name="location" size={20} color={Colors.warning} />}
           title="Location Alerts"
           description="Notifications for dogs in your area"
           value={locationAlerts}
@@ -87,7 +87,7 @@ export default function NotificationsScreen() {
         />
         
         <NotificationOption
-          icon={<Heart size={20} color={Colors.success} />}
+          icon={<Ionicons name="heart" size={20} color={Colors.success} />}
           title="Adoption News"
           description="Updates about successful adoptions"
           value={adoptionNews}

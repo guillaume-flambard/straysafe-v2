@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MessageCircle, Users, Dog, MapPin, Plus, Search } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useMessages } from '@/hooks/messages-store';
 import Colors from '@/constants/colors';
 import Input from '@/components/Input';
@@ -44,11 +44,11 @@ export default function MessagesScreen() {
   const getConversationIcon = (conversation: any) => {
     switch (conversation.type) {
       case 'dog_discussion':
-        return <Dog size={20} color={Colors.primary} />;
+        return <Ionicons name="paw" size={20} color={Colors.primary} />;
       case 'location_group':
-        return <MapPin size={20} color={Colors.success} />;
+        return <Ionicons name="location" size={20} color={Colors.success} />;
       default:
-        return <MessageCircle size={20} color={Colors.secondary} />;
+        return <Ionicons name="chatbubble" size={20} color={Colors.secondary} />;
     }
   };
 
@@ -182,7 +182,7 @@ export default function MessagesScreen() {
           onPress={() => router.push('/new-conversation')}
           variant="outline"
           size="small"
-          leftIcon={<Plus size={16} color={Colors.primary} />}
+          leftIcon={<Ionicons name="add" size={16} color={Colors.primary} />}
           style={styles.newChatButton}
         />
       </View>
@@ -192,7 +192,7 @@ export default function MessagesScreen() {
           placeholder="Search conversations..."
           value={searchQuery}
           onChangeText={setSearchQuery}
-          leftIcon={<Search size={16} color={Colors.textLight} />}
+          leftIcon={<Ionicons name="search" size={16} color={Colors.textLight} />}
           containerStyle={styles.searchInput}
         />
       </View>
@@ -222,7 +222,7 @@ export default function MessagesScreen() {
       >
         {filteredConversations.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <MessageCircle size={64} color={Colors.textLight} />
+            <Ionicons name="chatbubble" size={64} color={Colors.textLight} />
             <Text style={styles.emptyTitle}>
               {searchQuery ? 'No conversations found' : 'No conversations yet'}
             </Text>
@@ -237,7 +237,7 @@ export default function MessagesScreen() {
                 title="Start New Conversation"
                 onPress={() => router.push('/new-conversation')}
                 style={styles.startChatButton}
-                leftIcon={<Plus size={16} color="white" />}
+                leftIcon={<Ionicons name="add" size={16} color="white" />}
               />
             )}
           </View>

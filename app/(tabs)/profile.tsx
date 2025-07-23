@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { resetOnboardingForUser } from '@/utils/onboarding';
 import Colors from '@/constants/colors';
 import Button from '@/components/Button';
-import { LogOut, Settings, HelpCircle, Bell, Shield, MapPin, ChevronRight, User } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { showToast, ToastComponent } from '@/utils/toast';
 
 interface UserProfile {
@@ -131,7 +131,7 @@ export default function ProfileScreen() {
         <Text style={styles.optionTitle}>{title}</Text>
         {subtitle && <Text style={styles.optionSubtitle}>{subtitle}</Text>}
       </View>
-      <ChevronRight size={20} color={Colors.textLight} />
+      <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
     </Pressable>
   );
 
@@ -170,7 +170,7 @@ export default function ProfileScreen() {
               )}
               {profile.location && (
                 <View style={styles.locationDisplay}>
-                  <MapPin size={14} color={Colors.textLight} />
+                  <Ionicons name="location" size={14} color={Colors.textLight} />
                   <Text style={styles.locationDisplayText}>{profile.location}</Text>
                 </View>
               )}
@@ -183,20 +183,20 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>
         <ProfileOption 
-          icon={<Settings size={20} color={Colors.primary} />} 
+          icon={<Ionicons name="settings" size={20} color={Colors.primary} />} 
           title="Account Settings" 
           subtitle="Update your profile information" 
           onPress={() => router.push('/settings/account')}
         />
         <ProfileOption 
-          icon={<Bell size={20} color={Colors.secondary} />} 
+          icon={<Ionicons name="notifications" size={20} color={Colors.secondary} />} 
           title="Notifications" 
           subtitle="Manage your notification preferences" 
           color={Colors.secondary}
           onPress={() => router.push('/notification-settings')}
         />
         <ProfileOption 
-          icon={<Shield size={20} color={Colors.success} />} 
+          icon={<Ionicons name="shield" size={20} color={Colors.success} />} 
           title="Privacy & Security" 
           subtitle="Control your data and security settings" 
           color={Colors.success}
@@ -207,7 +207,7 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Support</Text>
         <ProfileOption 
-          icon={<HelpCircle size={20} color={Colors.textLight} />} 
+          icon={<Ionicons name="help-circle" size={20} color={Colors.textLight} />} 
           title="Help & Support" 
           subtitle="Get help with using the app" 
           color={Colors.textLight}
@@ -216,14 +216,14 @@ export default function ProfileScreen() {
         {__DEV__ && (
           <>
             <ProfileOption 
-              icon={<Bell size={20} color={Colors.warning} />} 
+              icon={<Ionicons name="notifications" size={20} color={Colors.warning} />} 
               title="Test Notifications" 
               subtitle="Test push notification functionality" 
               color={Colors.warning}
               onPress={() => router.push('/notification-test')}
             />
             <ProfileOption 
-              icon={<HelpCircle size={20} color={Colors.secondary} />} 
+              icon={<Ionicons name="help-circle" size={20} color={Colors.secondary} />} 
               title="Reset Onboarding" 
               subtitle="Show onboarding tutorial again" 
               color={Colors.secondary}
@@ -239,7 +239,7 @@ export default function ProfileScreen() {
               }}
             />
             <ProfileOption 
-              icon={<User size={20} color={Colors.success} />} 
+              icon={<Ionicons name="person" size={20} color={Colors.success} />} 
               title="Test Users Manager" 
               subtitle="Create and test different user roles" 
               color={Colors.success}
@@ -255,7 +255,7 @@ export default function ProfileScreen() {
         variant="outline"
         style={styles.signOutButton}
         fullWidth
-        leftIcon={<LogOut size={18} color={Colors.primary} />}
+        leftIcon={<Ionicons name="log-out" size={18} color={Colors.primary} />}
       />
       
       <Text style={styles.version}>StraySafe v1.0.0</Text>

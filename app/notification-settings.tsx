@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, Pressable, Switch, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Bell, MessageSquare, Users, Dog, MapPin, Volume2, Vibrate } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNotifications } from '@/hooks/notifications-store';
 import { useAuth } from '@/hooks/auth-store';
 import { supabase } from '@/lib/supabase';
@@ -163,7 +163,7 @@ export default function NotificationSettingsScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <ArrowLeft size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={Colors.text} />
         </Pressable>
         <Text style={styles.headerTitle}>Notification Settings</Text>
         <View style={styles.headerSpacer} />
@@ -178,7 +178,7 @@ export default function NotificationSettingsScreen() {
             styles.permissionCard,
             hasPermissions() ? styles.permissionCardEnabled : styles.permissionCardDisabled
           ]}>
-            <Bell 
+            <Ionicons name="notifications" 
               size={24} 
               color={hasPermissions() ? Colors.success : Colors.warning} 
             />
@@ -210,7 +210,7 @@ export default function NotificationSettingsScreen() {
           <Text style={styles.sectionTitle}>Notification Types</Text>
           
           <SettingItem
-            icon={<MessageSquare size={20} color={Colors.secondary} />}
+            icon={<Ionicons name="chatbubble-outline" size={20} color={Colors.secondary} />}
             title="Messages"
             subtitle="Get notified when you receive new messages"
             setting="messages_enabled"
@@ -218,7 +218,7 @@ export default function NotificationSettingsScreen() {
           />
           
           <SettingItem
-            icon={<Users size={20} color={Colors.primary} />}
+            icon={<Ionicons name="people" size={20} color={Colors.primary} />}
             title="Conversations"
             subtitle="Get notified about conversation invites and updates"
             setting="conversations_enabled"
@@ -226,7 +226,7 @@ export default function NotificationSettingsScreen() {
           />
           
           <SettingItem
-            icon={<Dog size={20} color={Colors.primary} />}
+            icon={<Ionicons name="paw" size={20} color={Colors.primary} />}
             title="Dog Discussions"
             subtitle="Get notified about discussions for dogs you're following"
             setting="dogs_enabled"
@@ -234,7 +234,7 @@ export default function NotificationSettingsScreen() {
           />
           
           <SettingItem
-            icon={<MapPin size={20} color={Colors.success} />}
+            icon={<Ionicons name="location" size={20} color={Colors.success} />}
             title="Location Groups"
             subtitle="Get notified about activity in your location groups"
             setting="locations_enabled"
@@ -247,7 +247,7 @@ export default function NotificationSettingsScreen() {
           <Text style={styles.sectionTitle}>Sound & Vibration</Text>
           
           <SettingItem
-            icon={<Volume2 size={20} color={Colors.textLight} />}
+            icon={<Ionicons name="volume-high" size={20} color={Colors.textLight} />}
             title="Sound"
             subtitle="Play notification sound"
             setting="sound_enabled"
@@ -255,7 +255,7 @@ export default function NotificationSettingsScreen() {
           />
           
           <SettingItem
-            icon={<Vibrate size={20} color={Colors.textLight} />}
+            icon={<Ionicons name="phone-portrait" size={20} color={Colors.textLight} />}
             title="Vibration"
             subtitle="Vibrate on new notifications"
             setting="vibration_enabled"
@@ -272,7 +272,7 @@ export default function NotificationSettingsScreen() {
               title="Send Test Notification"
               onPress={sendTestNotification}
               variant="outline"
-              leftIcon={<Bell size={16} color={Colors.primary} />}
+              leftIcon={<Ionicons name="notifications" size={16} color={Colors.primary} />}
             />
           </View>
         )}

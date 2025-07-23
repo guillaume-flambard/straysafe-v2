@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, Switch, Alert, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Shield, Eye, Lock, Trash2, Users, MapPin, EyeOff } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/hooks/auth-store';
 import { supabase } from '@/lib/supabase';
 import Colors from '@/constants/colors';
@@ -167,7 +167,7 @@ export default function PrivacyScreen() {
           <Text style={styles.sectionTitle}>Profile Privacy</Text>
           
           <PrivacyOption
-            icon={<Eye size={20} color={Colors.primary} />}
+            icon={<Ionicons name="eye" size={20} color={Colors.primary} />}
             title="Profile Visibility"
             description="Make your profile visible to other users"
             value={settings.profile_visibility}
@@ -175,7 +175,7 @@ export default function PrivacyScreen() {
           />
           
           <PrivacyOption
-            icon={<Users size={20} color={Colors.secondary} />}
+            icon={<Ionicons name="people" size={20} color={Colors.secondary} />}
             title="Search Visibility"
             description="Allow others to find you in search results"
             value={settings.search_visibility}
@@ -188,7 +188,7 @@ export default function PrivacyScreen() {
           <Text style={styles.sectionTitle}>Location & Activity</Text>
           
           <PrivacyOption
-            icon={<MapPin size={20} color={Colors.success} />}
+            icon={<Ionicons name="location" size={20} color={Colors.success} />}
             title="Location Sharing"
             description="Share your location with other users"
             value={settings.location_sharing}
@@ -197,7 +197,7 @@ export default function PrivacyScreen() {
           />
           
           <PrivacyOption
-            icon={<Shield size={20} color={Colors.warning} />}
+            icon={<Ionicons name="shield" size={20} color={Colors.warning} />}
             title="Activity Status"
             description="Show when you're active or last seen"
             value={settings.activity_status}
@@ -210,7 +210,7 @@ export default function PrivacyScreen() {
           <Text style={styles.sectionTitle}>Data & Analytics</Text>
           
           <PrivacyOption
-            icon={<Lock size={20} color={Colors.textLight} />}
+            icon={<Ionicons name="lock-closed" size={20} color={Colors.textLight} />}
             title="Analytics"
             description="Help us improve the app with usage analytics"
             value={settings.data_analytics}
@@ -242,7 +242,7 @@ export default function PrivacyScreen() {
             onPress={handleDeleteAccount}
             variant="danger"
             style={styles.deleteButton}
-            leftIcon={<Trash2 size={18} color="white" />}
+            leftIcon={<Ionicons name="trash" size={18} color="white" />}
             fullWidth
           />
         </View>

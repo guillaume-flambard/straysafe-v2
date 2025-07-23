@@ -5,7 +5,7 @@ import { useNotifications } from '@/hooks/notifications-store';
 import { useAuth } from '@/hooks/auth-store';
 import Colors from '@/constants/colors';
 import Button from '@/components/Button';
-import { Bell, Send, Settings, CheckCircle } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function NotificationTestScreen() {
   const router = useRouter();
@@ -56,7 +56,7 @@ export default function NotificationTestScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
-        <Bell size={32} color={Colors.primary} />
+        <Ionicons name="notifications" size={32} color={Colors.primary} />
         <Text style={styles.title}>Push Notifications Test</Text>
         <Text style={styles.subtitle}>Test and configure push notifications</Text>
       </View>
@@ -97,7 +97,7 @@ export default function NotificationTestScreen() {
           <Text style={styles.permissionLabel}>Notifications Granted:</Text>
           <View style={styles.permissionStatus}>
             {hasPermissions() ? (
-              <CheckCircle size={20} color={Colors.success} />
+              <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
             ) : (
               <Text style={[styles.permissionText, { color: Colors.danger }]}>
                 Not Granted
@@ -125,7 +125,7 @@ export default function NotificationTestScreen() {
           <Button
             title="Request Permissions"
             onPress={handleRequestPermissions}
-            leftIcon={<Settings size={16} color="white" />}
+            leftIcon={<Ionicons name="settings" size={16} color="white" />}
             style={styles.actionButton}
             disabled={loading}
           />
@@ -135,7 +135,7 @@ export default function NotificationTestScreen() {
           <Button
             title="Initialize Notifications"
             onPress={initializeNotifications}
-            leftIcon={<Bell size={16} color="white" />}
+            leftIcon={<Ionicons name="notifications" size={16} color="white" />}
             style={styles.actionButton}
             loading={loading}
           />
@@ -145,7 +145,7 @@ export default function NotificationTestScreen() {
           <Button
             title="Send Test Notification"
             onPress={sendTestNotification}
-            leftIcon={<Send size={16} color="white" />}
+            leftIcon={<Ionicons name="send" size={16} color="white" />}
             style={styles.actionButton}
           />
         )}

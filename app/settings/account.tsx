@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, Pressable, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, User, Mail, MapPin, FileText, Camera, Save } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/hooks/auth-store';
@@ -229,7 +229,7 @@ export default function AccountSettingsScreen() {
               {uploading ? (
                 <ActivityIndicator size="small" color="white" />
               ) : (
-                <Camera size={20} color="white" />
+                <Ionicons name="camera" size={20} color="white" />
               )}
             </Pressable>
           </View>
@@ -244,7 +244,7 @@ export default function AccountSettingsScreen() {
             value={profile.full_name || ''}
             onChangeText={(text) => updateField('full_name', text)}
             placeholder="Enter your full name"
-            leftIcon={<User size={20} color={Colors.textLight} />}
+            leftIcon={<Ionicons name="person" size={20} color={Colors.textLight} />}
           />
           
           <Input
@@ -254,7 +254,7 @@ export default function AccountSettingsScreen() {
             placeholder="Enter your email"
             keyboardType="email-address"
             autoCapitalize="none"
-            leftIcon={<Mail size={20} color={Colors.textLight} />}
+            leftIcon={<Ionicons name="mail" size={20} color={Colors.textLight} />}
             editable={false}
             containerStyle={styles.disabledInput}
           />
@@ -264,7 +264,7 @@ export default function AccountSettingsScreen() {
             value={profile.location || ''}
             onChangeText={(text) => updateField('location', text)}
             placeholder="Enter your address or location"
-            leftIcon={<MapPin size={20} color={Colors.textLight} />}
+            leftIcon={<Ionicons name="location" size={20} color={Colors.textLight} />}
           />
         </View>
 
@@ -279,7 +279,7 @@ export default function AccountSettingsScreen() {
             multiline
             numberOfLines={4}
             style={styles.bioInput}
-            leftIcon={<FileText size={20} color={Colors.textLight} />}
+            leftIcon={<Ionicons name="document-text" size={20} color={Colors.textLight} />}
           />
         </View>
 
@@ -288,7 +288,7 @@ export default function AccountSettingsScreen() {
           title="Save Changes"
           onPress={updateProfile}
           loading={saving}
-          leftIcon={<Save size={16} color="white" />}
+          leftIcon={<Ionicons name="save" size={16} color="white" />}
           style={styles.saveButton}
         />
         </ScrollView>

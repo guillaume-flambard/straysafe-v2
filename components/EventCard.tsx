@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { DogEvent } from '@/types';
 import Colors from '@/constants/colors';
-import { Calendar, MapPin, Stethoscope, FileText } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 interface EventCardProps {
   event: DogEvent;
@@ -12,14 +12,14 @@ export default function EventCard({ event }: EventCardProps) {
   const getEventIcon = () => {
     switch (event.type) {
       case 'medical':
-        return <Stethoscope size={20} color={Colors.danger} />;
+        return <Ionicons name="medical" size={20} color={Colors.danger} />;
       case 'location':
-        return <MapPin size={20} color={Colors.primary} />;
+        return <Ionicons name="location" size={20} color={Colors.primary} />;
       case 'status':
-        return <Calendar size={20} color={Colors.secondary} />;
+        return <Ionicons name="calendar" size={20} color={Colors.secondary} />;
       case 'note':
       default:
-        return <FileText size={20} color={Colors.textLight} />;
+        return <Ionicons name="document-text" size={20} color={Colors.textLight} />;
     }
   };
 

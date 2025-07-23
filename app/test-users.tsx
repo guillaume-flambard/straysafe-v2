@@ -11,7 +11,7 @@ import {
   setupAllTestUsers,
   testPermissions 
 } from '@/utils/test-permissions';
-import { UserPlus, LogIn, Settings, Users, CheckCircle, XCircle } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function TestUsersScreen() {
   const router = useRouter();
@@ -114,7 +114,7 @@ export default function TestUsersScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
-        <Users size={32} color={Colors.primary} />
+        <Ionicons name="people" size={32} color={Colors.primary} />
         <Text style={styles.title}>Test Users Manager</Text>
         <Text style={styles.subtitle}>Create and test different user roles</Text>
       </View>
@@ -138,7 +138,7 @@ export default function TestUsersScreen() {
           title="Create All Test Users"
           onPress={handleSetupAllUsers}
           loading={loading}
-          leftIcon={<UserPlus size={16} color="white" />}
+          leftIcon={<Ionicons name="person-add" size={16} color="white" />}
           style={styles.setupButton}
         />
       </View>
@@ -168,14 +168,14 @@ export default function TestUsersScreen() {
                 onPress={() => handleCreateTestUser(testUser)}
                 variant="outline"
                 style={styles.actionButton}
-                leftIcon={<UserPlus size={14} color={Colors.primary} />}
+                leftIcon={<Ionicons name="person-add" size={14} color={Colors.primary} />}
                 disabled={loading}
               />
               <Button
                 title="Login"
                 onPress={() => handleTestLogin(testUser)}
                 style={styles.actionButton}
-                leftIcon={<LogIn size={14} color="white" />}
+                leftIcon={<Ionicons name="log-in" size={14} color="white" />}
                 disabled={loading}
               />
             </View>
@@ -190,9 +190,9 @@ export default function TestUsersScreen() {
             <View key={index} style={styles.resultCard}>
               <View style={styles.resultHeader}>
                 {result.success ? (
-                  <CheckCircle size={20} color={Colors.success} />
+                  <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
                 ) : (
-                  <XCircle size={20} color={Colors.danger} />
+                  <Ionicons name="close-circle" size={20} color={Colors.danger} />
                 )}
                 <Text style={styles.resultEmail}>{result.email}</Text>
               </View>

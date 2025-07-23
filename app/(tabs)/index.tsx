@@ -5,7 +5,7 @@ import { DogStatus } from '@/types';
 import Colors from '@/constants/colors';
 import DogCard from '@/components/DogCard';
 import FilterTabs from '@/components/FilterTabs';
-import { Search } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Input from '@/components/Input';
 
 export default function DogsScreen() {
@@ -70,7 +70,7 @@ export default function DogsScreen() {
           onChangeText={setSearchQuery}
           containerStyle={styles.searchInputContainer}
           style={styles.searchInput}
-          leftIcon={<Search size={20} color={Colors.placeholder} />}
+          leftIcon={<Ionicons name="search" size={20} color={Colors.placeholder} />}
         />
       </View>
       

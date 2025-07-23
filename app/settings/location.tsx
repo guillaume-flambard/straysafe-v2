@@ -4,7 +4,7 @@ import Colors from '@/constants/colors';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/auth-store';
-import { MapPin, Check } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function LocationSettingsScreen() {
   const { user } = useAuth();
@@ -40,7 +40,7 @@ export default function LocationSettingsScreen() {
             styles.locationIconContainer,
             { backgroundColor: isSelected ? Colors.primary + '20' : Colors.background }
           ]}>
-            <MapPin size={20} color={isSelected ? Colors.primary : Colors.textLight} />
+            <Ionicons name="location" size={20} color={isSelected ? Colors.primary : Colors.textLight} />
           </View>
           <View style={styles.locationText}>
             <Text style={[
@@ -57,7 +57,7 @@ export default function LocationSettingsScreen() {
           </View>
         </View>
         {isSelected && (
-          <Check size={20} color={Colors.primary} />
+          <Ionicons name="checkmark" size={20} color={Colors.primary} />
         )}
       </Pressable>
     );

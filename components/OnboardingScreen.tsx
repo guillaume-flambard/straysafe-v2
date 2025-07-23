@@ -10,18 +10,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 // LinearGradient removed due to React 19 compatibility issues
-import {
-  Heart,
-  MessageCircle,
-  MapPin,
-  Users,
-  Shield,
-  Bell,
-  Camera,
-  Search,
-  ArrowRight,
-  Check,
-} from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Colors from '@/constants/colors';
 import Button from '@/components/Button';
 
@@ -42,7 +31,7 @@ const onboardingSteps: OnboardingStep[] = [
     title: 'Welcome to StraySafe',
     subtitle: 'Helping stray animals together',
     description: 'Join our community of volunteers, veterinarians, and animal lovers working together to help stray dogs find safety and care.',
-    icon: <Heart size={60} color="white" />,
+    icon: <Ionicons name="heart" size={60} color="white" />,
     gradient: [Colors.primary, Colors.secondary],
   },
   {
@@ -50,7 +39,7 @@ const onboardingSteps: OnboardingStep[] = [
     title: 'Track & Monitor',
     subtitle: 'Keep detailed records',
     description: 'Document stray dogs with photos, location data, medical notes, and status updates. Every detail helps in their rescue journey.',
-    icon: <Camera size={60} color="white" />,
+    icon: <Ionicons name="camera" size={60} color="white" />,
     gradient: [Colors.success, Colors.primary],
   },
   {
@@ -58,7 +47,7 @@ const onboardingSteps: OnboardingStep[] = [
     title: 'Real-time Collaboration',
     subtitle: 'Work together effectively',
     description: 'Chat with team members, share updates instantly, and coordinate rescue efforts through our messaging system.',
-    icon: <MessageCircle size={60} color="white" />,
+    icon: <Ionicons name="chatbubble" size={60} color="white" />,
     gradient: [Colors.secondary, Colors.warning],
   },
   {
@@ -66,7 +55,7 @@ const onboardingSteps: OnboardingStep[] = [
     title: 'Location-Based',
     subtitle: 'Find dogs near you',
     description: 'Use GPS to track exact locations, mark last seen spots, and coordinate based on your area of operation.',
-    icon: <MapPin size={60} color="white" />,
+    icon: <Ionicons name="location" size={60} color="white" />,
     gradient: [Colors.warning, Colors.danger],
   },
   {
@@ -74,7 +63,7 @@ const onboardingSteps: OnboardingStep[] = [
     title: 'Community Driven',
     subtitle: 'Connect with others',
     description: 'Join a network of volunteers, vets, and administrators. Share knowledge and work together for better outcomes.',
-    icon: <Users size={60} color="white" />,
+    icon: <Ionicons name="people" size={60} color="white" />,
     gradient: [Colors.danger, Colors.success],
   },
   {
@@ -82,7 +71,7 @@ const onboardingSteps: OnboardingStep[] = [
     title: 'Privacy & Security',
     subtitle: 'Your data is protected',
     description: 'We respect your privacy. Control what you share, who can see your profile, and manage your data with granular settings.',
-    icon: <Shield size={60} color="white" />,
+    icon: <Ionicons name="shield" size={60} color="white" />,
     gradient: [Colors.textLight, Colors.primary],
   },
 ];
@@ -219,9 +208,9 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             onPress={nextStep}
             leftIcon={
               isLastStep ? (
-                <Check size={18} color="white" />
+                <Ionicons name="checkmark" size={18} color="white" />
               ) : (
-                <ArrowRight size={18} color="white" />
+                <Ionicons name="chevron-forward" size={18} color="white" />
               )
             }
             style={[

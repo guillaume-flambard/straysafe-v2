@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Dog } from '@/types';
 import Colors from '@/constants/colors';
 import StatusBadge from './StatusBadge';
-import { MapPin } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 interface DogCardProps {
   dog: Dog;
@@ -41,7 +41,7 @@ export default function DogCard({ dog }: DogCardProps) {
         
         {dog.lastSeen && dog.status === 'stray' && (
           <View style={styles.locationContainer}>
-            <MapPin size={14} color={Colors.textLight} />
+            <Ionicons name="location" size={14} color={Colors.textLight} />
             <Text style={styles.location}>
               Last seen: {new Date(dog.lastSeen).toLocaleDateString()} at {dog.lastSeenLocation}
             </Text>

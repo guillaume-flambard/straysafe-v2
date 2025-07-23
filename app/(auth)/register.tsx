@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
 import Colors from '@/constants/colors';
-import { User, MapPin, Mail, Lock, ArrowLeft } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -222,7 +222,7 @@ export default function RegisterScreen() {
         ]}
         onPress={() => setSelectedLocationId(location.id)}
       >
-        <MapPin 
+        <Ionicons name="location" 
           size={20} 
           color={isSelected ? Colors.primary : Colors.textLight} 
         />
@@ -253,7 +253,7 @@ export default function RegisterScreen() {
             style={styles.backButton}
             onPress={() => isCompletingProfile ? {} : router.replace('/(auth)/login')}
           >
-            <ArrowLeft size={24} color={isCompletingProfile ? Colors.textLight : Colors.primary} />
+            <Ionicons name="arrow-back" size={24} color={isCompletingProfile ? Colors.textLight : Colors.primary} />
           </Pressable>
           
           <View style={styles.logoContainer}>
@@ -281,7 +281,7 @@ export default function RegisterScreen() {
             value={name}
             onChangeText={setName}
             error={errors.name}
-            leftIcon={<User size={20} color={Colors.textLight} />}
+            leftIcon={<Ionicons name="person" size={20} color={Colors.textLight} />}
           />
           
           {!isCompletingProfile && (
@@ -294,7 +294,7 @@ export default function RegisterScreen() {
                 value={email}
                 onChangeText={setEmail}
                 error={errors.email}
-                leftIcon={<Mail size={20} color={Colors.textLight} />}
+                leftIcon={<Ionicons name="mail" size={20} color={Colors.textLight} />}
               />
               
               <Input
@@ -304,7 +304,7 @@ export default function RegisterScreen() {
                 value={password}
                 onChangeText={setPassword}
                 error={errors.password}
-                leftIcon={<Lock size={20} color={Colors.textLight} />}
+                leftIcon={<Ionicons name="lock-closed" size={20} color={Colors.textLight} />}
               />
               
               <Input
@@ -314,7 +314,7 @@ export default function RegisterScreen() {
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 error={errors.confirmPassword}
-                leftIcon={<Lock size={20} color={Colors.textLight} />}
+                leftIcon={<Ionicons name="lock-closed" size={20} color={Colors.textLight} />}
               />
             </>
           )}

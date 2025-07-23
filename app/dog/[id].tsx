@@ -8,7 +8,7 @@ import Colors from '@/constants/colors';
 import StatusBadge from '@/components/StatusBadge';
 import EventCard from '@/components/EventCard';
 import Button from '@/components/Button';
-import { Calendar, MapPin, Stethoscope, FileText, Plus, Edit } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 
@@ -100,7 +100,7 @@ export default function DogProfileScreen() {
                 style={styles.editButton}
                 onPress={() => Alert.alert('Edit', 'Edit functionality would be implemented here')}
               >
-                <Edit size={20} color={Colors.primary} />
+                <Ionicons name="pencil" size={20} color={Colors.primary} />
               </Pressable>
             ) : null
           ),
@@ -125,7 +125,7 @@ export default function DogProfileScreen() {
             </Text>
             
             <View style={styles.locationContainer}>
-              <MapPin size={16} color={Colors.textLight} />
+              <Ionicons name="location" size={16} color={Colors.textLight} />
               <Text style={styles.location}>
                 {location?.name || 'Unknown location'}
               </Text>
@@ -200,7 +200,7 @@ export default function DogProfileScreen() {
                 <View style={styles.infoSection}>
                   <Text style={styles.infoTitle}>Last Seen</Text>
                   <View style={styles.lastSeenContainer}>
-                    <MapPin size={16} color={Colors.primary} />
+                    <Ionicons name="location" size={16} color={Colors.primary} />
                     <Text style={styles.lastSeenText}>
                       {new Date(dog.lastSeen).toLocaleDateString()} at {dog.lastSeenLocation || 'Unknown location'}
                     </Text>
@@ -243,28 +243,28 @@ export default function DogProfileScreen() {
                       style={[styles.addEventButton, { backgroundColor: Colors.primary + '20' }]}
                       onPress={() => handleAddEvent('location')}
                     >
-                      <MapPin size={20} color={Colors.primary} />
+                      <Ionicons name="location" size={20} color={Colors.primary} />
                       <Text style={[styles.addEventButtonText, { color: Colors.primary }]}>Location</Text>
                     </Pressable>
                     <Pressable 
                       style={[styles.addEventButton, { backgroundColor: Colors.danger + '20' }]}
                       onPress={() => handleAddEvent('medical')}
                     >
-                      <Stethoscope size={20} color={Colors.danger} />
+                      <Ionicons name="medical" size={20} color={Colors.danger} />
                       <Text style={[styles.addEventButtonText, { color: Colors.danger }]}>Medical</Text>
                     </Pressable>
                     <Pressable 
                       style={[styles.addEventButton, { backgroundColor: Colors.secondary + '20' }]}
                       onPress={() => handleAddEvent('status')}
                     >
-                      <Calendar size={20} color={Colors.secondary} />
+                      <Ionicons name="calendar" size={20} color={Colors.secondary} />
                       <Text style={[styles.addEventButtonText, { color: Colors.secondary }]}>Status</Text>
                     </Pressable>
                     <Pressable 
                       style={[styles.addEventButton, { backgroundColor: Colors.textLight + '20' }]}
                       onPress={() => handleAddEvent('note')}
                     >
-                      <FileText size={20} color={Colors.textLight} />
+                      <Ionicons name="document-text" size={20} color={Colors.textLight} />
                       <Text style={[styles.addEventButtonText, { color: Colors.textLight }]}>Note</Text>
                     </Pressable>
                   </View>
@@ -278,7 +278,7 @@ export default function DogProfileScreen() {
                     <Button
                       title="Add First Event"
                       onPress={() => handleAddEvent('note')}
-                      leftIcon={<Plus size={16} color="white" />}
+                      leftIcon={<Ionicons name="add" size={16} color="white" />}
                       style={styles.addFirstEventButton}
                     />
                   )}

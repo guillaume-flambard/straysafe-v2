@@ -7,7 +7,7 @@ import { Dog, DogGender, DogStatus } from '@/types';
 import Colors from '@/constants/colors';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
-import { Camera, Check, X, Image as ImageIcon, MapPin, Upload, ChevronDown, Map } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { showToast, ToastComponent } from '@/utils/toast';
 import { supabase } from '@/lib/supabase';
 import { uploadDogImage } from '@/services/image-upload';
@@ -388,7 +388,7 @@ export default function AddDogScreen() {
         styles.toggleButton,
         value ? styles.toggleButtonActive : styles.toggleButtonInactive
       ]}>
-        {value ? <Check size={16} color="white" /> : <X size={16} color="white" />}
+        {value ? <Ionicons name="checkmark" size={16} color="white" /> : <Ionicons name="close" size={16} color="white" />}
       </View>
       <Text style={styles.toggleLabel}>{label}</Text>
     </Pressable>
@@ -412,7 +412,7 @@ export default function AddDogScreen() {
           onPress={() => setShowLocationPicker(!showLocationPicker)}
         >
           <View style={styles.locationSelectorContent}>
-            <MapPin size={16} color={Colors.textLight} />
+            <Ionicons name="location" size={16} color={Colors.textLight} />
             <Text style={[
               styles.locationSelectorText,
               !selectedLocationId && styles.locationSelectorPlaceholder
@@ -420,7 +420,7 @@ export default function AddDogScreen() {
               {selectedLocation ? selectedLocation.name : 'Select location'}
             </Text>
           </View>
-          <ChevronDown 
+          <Ionicons name="chevron-down" 
             size={16} 
             color={Colors.textLight}
             style={{ transform: [{ rotate: showLocationPicker ? '180deg' : '0deg' }] }}
@@ -442,7 +442,7 @@ export default function AddDogScreen() {
                   validateField('location', location.id);
                 }}
               >
-                <MapPin 
+                <Ionicons name="location" 
                   size={14} 
                   color={selectedLocationId === location.id ? Colors.primary : Colors.textLight} 
                 />
@@ -460,7 +460,7 @@ export default function AddDogScreen() {
                   )}
                 </View>
                 {selectedLocationId === location.id && (
-                  <Check size={14} color={Colors.primary} />
+                  <Ionicons name="checkmark" size={14} color={Colors.primary} />
                 )}
               </Pressable>
             ))}
@@ -488,7 +488,7 @@ export default function AddDogScreen() {
           ]}>
             {breed || 'type breed'}
           </Text>
-          <ChevronDown 
+          <Ionicons name="chevron-down" 
             size={16} 
             color={Colors.textLight}
             style={{ transform: [{ rotate: showBreedSuggestions ? '180deg' : '0deg' }] }}
@@ -531,7 +531,7 @@ export default function AddDogScreen() {
                       {breedOption}
                     </Text>
                     {breed === breedOption && (
-                      <Check size={16} color={Colors.primary} />
+                      <Ionicons name="checkmark" size={16} color={Colors.primary} />
                     )}
                   </Pressable>
                 ))}
@@ -562,7 +562,7 @@ export default function AddDogScreen() {
           <View style={styles.mapPickerHeader}>
             <Text style={styles.mapPickerTitle}>Select Precise Location</Text>
             <Pressable onPress={() => setShowMapPicker(false)}>
-              <X size={24} color={Colors.textLight} />
+              <Ionicons name="close" size={24} color={Colors.textLight} />
             </Pressable>
           </View>
           
@@ -626,7 +626,7 @@ export default function AddDogScreen() {
             <Image source={{ uri: imageUri }} style={styles.selectedImage} />
           ) : (
             <>
-              <Camera size={40} color={Colors.placeholder} />
+              <Ionicons name="camera" size={40} color={Colors.placeholder} />
               <Text style={styles.imagePlaceholderText}>Add Photo</Text>
               <Text style={styles.imagePlaceholderSubtext}>Tap to take photo or select from library</Text>
             </>
@@ -645,7 +645,7 @@ export default function AddDogScreen() {
             variant="outline"
             size="small"
             style={styles.changePhotoButton}
-            leftIcon={<ImageIcon size={16} color={Colors.primary} />}
+            leftIcon={<Ionicons name="image" size={16} color={Colors.primary} />}
           />
         )}
       </View>
@@ -748,14 +748,14 @@ export default function AddDogScreen() {
               onPress={getCurrentLocation}
               variant={currentLocation ? "outline" : "primary"}
               loading={isGettingLocation}
-              leftIcon={<MapPin size={16} color={currentLocation ? Colors.success : Colors.primary} />}
+              leftIcon={<Ionicons name="location" size={16} color={currentLocation ? Colors.success : Colors.primary} />}
               style={styles.gpsButton}
             />
             <Button
               title="Select on Map"
               onPress={() => setShowMapPicker(true)}
               variant="outline"
-              leftIcon={<Map size={16} color={Colors.primary} />}
+              leftIcon={<Ionicons name="map" size={16} color={Colors.primary} />}
               style={styles.gpsButton}
             />
           </View>

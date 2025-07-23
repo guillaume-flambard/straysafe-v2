@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, MessageCircle, Dog, MapPin, Users, Search, Check } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useMessages } from '@/hooks/messages-store';
 import { useDogs } from '@/hooks/dogs-store';
 import { useAuth } from '@/hooks/auth-store';
@@ -194,7 +194,7 @@ export default function NewConversationScreen() {
         <Text style={styles.typeOptionSubtitle}>{subtitle}</Text>
       </View>
       {conversationType === type && (
-        <Check size={20} color={Colors.primary} />
+        <Ionicons name="checkmark" size={20} color={Colors.primary} />
       )}
     </Pressable>
   );
@@ -208,7 +208,7 @@ export default function NewConversationScreen() {
       onPress={() => handleUserSelect(user.id)}
     >
       <View style={styles.userAvatar}>
-        <Users size={20} color={Colors.textLight} />
+        <Ionicons name="people" size={20} color={Colors.textLight} />
       </View>
       <View style={styles.userContent}>
         <Text style={styles.userName}>
@@ -219,7 +219,7 @@ export default function NewConversationScreen() {
         )}
       </View>
       {selectedUsers.includes(user.id) && (
-        <Check size={20} color={Colors.primary} />
+        <Ionicons name="checkmark" size={20} color={Colors.primary} />
       )}
     </Pressable>
   );
@@ -233,7 +233,7 @@ export default function NewConversationScreen() {
       onPress={() => setSelectedDog(dog.id)}
     >
       <View style={styles.dogAvatar}>
-        <Dog size={20} color={Colors.primary} />
+        <Ionicons name="paw" size={20} color={Colors.primary} />
       </View>
       <View style={styles.dogContent}>
         <Text style={styles.dogName}>{dog.name}</Text>
@@ -243,7 +243,7 @@ export default function NewConversationScreen() {
         </Text>
       </View>
       {selectedDog === dog.id && (
-        <Check size={20} color={Colors.primary} />
+        <Ionicons name="checkmark" size={20} color={Colors.primary} />
       )}
     </Pressable>
   );
@@ -257,7 +257,7 @@ export default function NewConversationScreen() {
       onPress={() => setSelectedLocation(location.id)}
     >
       <View style={styles.locationIcon}>
-        <MapPin size={20} color={Colors.success} />
+        <Ionicons name="location" size={20} color={Colors.success} />
       </View>
       <View style={styles.locationContent}>
         <Text style={styles.locationName}>{location.name}</Text>
@@ -266,7 +266,7 @@ export default function NewConversationScreen() {
         )}
       </View>
       {selectedLocation === location.id && (
-        <Check size={20} color={Colors.primary} />
+        <Ionicons name="checkmark" size={20} color={Colors.primary} />
       )}
     </Pressable>
   );
@@ -278,7 +278,7 @@ export default function NewConversationScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <ArrowLeft size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={Colors.text} />
         </Pressable>
         <Text style={styles.headerTitle}>New Conversation</Text>
         <View style={styles.headerSpacer} />
@@ -291,7 +291,7 @@ export default function NewConversationScreen() {
             
             <ConversationTypeOption
               type="private"
-              icon={<MessageCircle size={24} color={Colors.secondary} />}
+              icon={<Ionicons name="chatbubble" size={24} color={Colors.secondary} />}
               title="Private Chat"
               subtitle="Direct message with another user"
               onPress={() => setConversationType('private')}
@@ -299,7 +299,7 @@ export default function NewConversationScreen() {
             
             <ConversationTypeOption
               type="dog_discussion"
-              icon={<Dog size={24} color={Colors.primary} />}
+              icon={<Ionicons name="paw" size={24} color={Colors.primary} />}
               title="Dog Discussion"
               subtitle="Public discussion about a specific dog"
               onPress={() => setConversationType('dog_discussion')}
@@ -307,7 +307,7 @@ export default function NewConversationScreen() {
             
             <ConversationTypeOption
               type="location_group"
-              icon={<MapPin size={24} color={Colors.success} />}
+              icon={<Ionicons name="location" size={24} color={Colors.success} />}
               title="Location Group"
               subtitle="Group chat for people in the same area"
               onPress={() => setConversationType('location_group')}
@@ -339,7 +339,7 @@ export default function NewConversationScreen() {
                     placeholder="Search users..."
                     value={searchQuery}
                     onChangeText={setSearchQuery}
-                    leftIcon={<Search size={16} color={Colors.textLight} />}
+                    leftIcon={<Ionicons name="search" size={16} color={Colors.textLight} />}
                     containerStyle={styles.searchInput}
                   />
                 </View>
@@ -428,7 +428,7 @@ export default function NewConversationScreen() {
               disabled={!canCreate() || creating}
               loading={creating}
               style={styles.createButton}
-              leftIcon={<MessageCircle size={16} color="white" />}
+              leftIcon={<Ionicons name="chatbubble" size={16} color="white" />}
             />
           </View>
         )}

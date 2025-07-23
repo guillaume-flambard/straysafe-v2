@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, Pressable, Linking, Alert } from 'react-native';
 import Colors from '@/constants/colors';
-import { MessageCircle, Mail, Phone, FileText, ExternalLink } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HelpScreen() {
   const handleContactPress = (type: string, value: string) => {
@@ -47,7 +47,7 @@ export default function HelpScreen() {
         <Text style={styles.helpTitle}>{title}</Text>
         <Text style={styles.helpDescription}>{description}</Text>
       </View>
-      <ExternalLink size={16} color={Colors.textLight} />
+      <Ionicons name="chevron-forward" size={16} color={Colors.textLight} />
     </Pressable>
   );
 
@@ -64,14 +64,14 @@ export default function HelpScreen() {
         <Text style={styles.sectionTitle}>Get Help</Text>
         
         <HelpOption
-          icon={<MessageCircle size={20} color={Colors.primary} />}
+          icon={<Ionicons name="chatbubble" size={20} color={Colors.primary} />}
           title="Live Chat"
           description="Chat with our support team"
           onPress={() => Alert.alert('Coming Soon', 'Live chat will be available soon.')}
         />
         
         <HelpOption
-          icon={<Mail size={20} color={Colors.secondary} />}
+          icon={<Ionicons name="mail" size={20} color={Colors.secondary} />}
           title="Email Support"
           description="Send us an email for detailed help"
           onPress={() => handleContactPress('email', 'support@straysafe.org')}
@@ -79,7 +79,7 @@ export default function HelpScreen() {
         />
         
         <HelpOption
-          icon={<Phone size={20} color={Colors.success} />}
+          icon={<Ionicons name="call" size={20} color={Colors.success} />}
           title="Emergency Hotline"
           description="Call for urgent animal welfare issues"
           onPress={() => handleContactPress('phone', '+66-123-456-789')}
@@ -87,7 +87,7 @@ export default function HelpScreen() {
         />
         
         <HelpOption
-          icon={<FileText size={20} color={Colors.warning} />}
+          icon={<Ionicons name="document-text" size={20} color={Colors.warning} />}
           title="User Guide"
           description="Learn how to use all app features"
           onPress={() => handleContactPress('website', 'https://straysafe.org/guide')}

@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/auth-store";
 import { useOnboarding } from "@/hooks/onboarding-store";
 import OnboardingScreen from "@/components/OnboardingScreen";
 import Colors from "@/constants/colors";
-import * as Lucide from "lucide-react-native";
+import { Ionicons } from '@expo/vector-icons';
 
 export default function TabLayout() {
   const authState = useAuth();
@@ -65,35 +65,35 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Dogs",
-          tabBarIcon: ({ color }) => <Lucide.Home size={24} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="map"
         options={{
           title: "Map",
-          tabBarIcon: ({ color }) => <Lucide.Map size={24} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="map" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="add"
         options={{
           title: "Add Dog",
-          tabBarIcon: ({ color }) => <Lucide.Plus size={24} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="add" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="messages"
         options={{
           title: "Messages",
-          tabBarIcon: ({ color }) => <Lucide.MessageCircle size={24} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="chatbubble" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color }) => <Lucide.User size={24} color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />,
         }}
       />
     </Tabs>

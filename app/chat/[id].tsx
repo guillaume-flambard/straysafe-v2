@@ -12,7 +12,7 @@ import {
   Alert
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Send, Image as ImageIcon, MapPin, MoreVertical, Users, Smile } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useMessages } from '@/hooks/messages-store';
 import { useAuth } from '@/hooks/auth-store';
 import Colors from '@/constants/colors';
@@ -295,7 +295,7 @@ export default function ChatScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <ArrowLeft size={24} color={Colors.text} />
+          <Ionicons name="arrow-back" size={24} color={Colors.text} />
         </Pressable>
         
         <View style={styles.headerContent}>
@@ -310,7 +310,7 @@ export default function ChatScreen() {
         </View>
         
         <Pressable style={styles.headerAction}>
-          <MoreVertical size={24} color={Colors.text} />
+          <Ionicons name="ellipsis-vertical" size={24} color={Colors.text} />
         </Pressable>
       </View>
 
@@ -372,7 +372,7 @@ export default function ChatScreen() {
           style={styles.attachButton}
           onPress={handleSendImage}
         >
-          <ImageIcon size={24} color={Colors.textLight} />
+          <Ionicons name="image" size={24} color={Colors.textLight} />
         </Pressable>
         
         <View style={styles.inputWrapper}>
@@ -397,7 +397,7 @@ export default function ChatScreen() {
           onPress={handleSendMessage}
           disabled={!messageText.trim() || sending}
         >
-          <Send size={20} color={messageText.trim() && !sending ? Colors.primary : Colors.textLight} />
+          <Ionicons name="send" size={20} color={messageText.trim() && !sending ? Colors.primary : Colors.textLight} />
         </Pressable>
       </View>
       
