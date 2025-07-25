@@ -1,11 +1,12 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image, Pressable } from 'react-native';
+import { StyleSheet, Text, View, Image, Pressable, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Dog } from '@/types';
 import Colors from '@/constants/colors';
 import StatusBadge from './StatusBadge';
 import DogInteractionStats from './DogInteractionStats';
 import { Ionicons } from '@expo/vector-icons';
+import { useDogFavorites } from '@/hooks/dog-favorites-store';
 
 interface DogCardProps {
   dog: Dog;
@@ -13,10 +14,22 @@ interface DogCardProps {
 
 export default function DogCard({ dog }: DogCardProps) {
   const router = useRouter();
+  const { isFavorited, toggleFavorite } = useDogFavorites();
 
   const handlePress = () => {
     router.push(`/dog/${dog.id}`);
   };
+
+  const handleFavoritePress = async (e: any) => {
+    e.stopPropagation();
+    try {
+      await toggleFavorite(dog.id);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
+  };
+
+  const isCurrentlyFavorited = isFavorited(dog.id);
 
   return (
     <Pressable 
@@ -26,10 +39,22 @@ export default function DogCard({ dog }: DogCardProps) {
       ]}
       onPress={handlePress}
     >
-      <Image 
-        source={{ uri: dog.mainImage || 'https://images.unsplash.com/photo-1561037404-61cd46aa615b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80' }} 
-        style={styles.image} 
-      />
+      <View style={styles.imageContainer}>
+        <Image 
+          source={{ uri: dog.mainImage || 'https://images.unsplash.com/photo-1561037404-61cd46aa615b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80' }} 
+          style={styles.image} 
+        />
+        <TouchableOpacity 
+          style={styles.favoriteButton} 
+          onPress={handleFavoritePress}
+        >
+          <Ionicons 
+            name={isCurrentlyFavorited ? "heart" : "heart-outline"} 
+            size={20} 
+            color={isCurrentlyFavorited ? "#E91E63" : "white"} 
+          />
+        </TouchableOpacity>
+      </View>
       <View style={styles.infoContainer}>
         <View style={styles.header}>
           <Text style={styles.name}>{dog.name}</Text>
@@ -84,9 +109,23 @@ const styles = StyleSheet.create({
     opacity: 0.9,
     transform: [{ scale: 0.98 }],
   },
+  imageContainer: {
+    position: 'relative',
+  },
   image: {
     width: '100%',
     height: 180,
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   infoContainer: {
     padding: 12,

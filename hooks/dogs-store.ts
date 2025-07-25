@@ -12,56 +12,71 @@ export const [DogsContext, useDogs] = createContextHook(() => {
   const [dogs, setDogs] = useState<Dog[]>([]);
   const [events, setEvents] = useState<DogEvent[]>([]);
 
-  // TEMPORARY: Return mock data to test app stability
   const dogsQuery = useQuery({
     queryKey: ['dogs'],
     queryFn: async () => {
-      console.log('Loading mock dogs data...');
-      // Return sample data instead of querying Supabase
-      return [
-        {
-          id: '1',
-          name: 'Sample Dog',
-          status: 'stray' as DogStatus,
-          gender: 'unknown' as 'male' | 'female' | 'unknown',
-          locationId: '1',
-          breed: 'Mixed',
-          age: 2,
-          description: 'A friendly dog',
-          lastSeen: null,
-          lastSeenLocation: null,
-          medicalNotes: null,
-          isNeutered: false,
-          isVaccinated: false,
-          mainImage: null,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          createdBy: null,
-        }
-      ];
+      console.log('Loading dogs from Supabase...');
+      const { data, error } = await supabase
+        .from('dogs')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading dogs:', error);
+        throw error;
+      }
+
+      // Transform snake_case to camelCase
+      return (data || []).map(dog => ({
+        id: dog.id,
+        name: dog.name,
+        status: dog.status as DogStatus,
+        gender: dog.gender as 'male' | 'female' | 'unknown',
+        locationId: dog.location_id,
+        breed: dog.breed,
+        age: dog.age,
+        description: dog.description,
+        lastSeen: dog.last_seen,
+        lastSeenLocation: dog.last_seen_location,
+        medicalNotes: dog.medical_notes,
+        isNeutered: dog.is_neutered,
+        isVaccinated: dog.is_vaccinated,
+        mainImage: dog.main_image,
+        createdAt: dog.created_at,
+        updatedAt: dog.updated_at,
+        createdBy: dog.created_by,
+      }));
     },
     enabled: !!user,
     staleTime: 30000,
   });
 
-  // TEMPORARY: Return mock events data
   const eventsQuery = useQuery({
     queryKey: ['events'],
     queryFn: async () => {
-      console.log('Loading mock events data...');
-      return [
-        {
-          id: '1',
-          dogId: '1',
-          type: 'note' as 'medical' | 'location' | 'status' | 'note',
-          title: 'Dog found',
-          description: 'Sample event for testing',
-          date: new Date().toISOString(),
-          createdBy: '1',
-          isPrivate: false,
-          createdAt: new Date().toISOString(),
-        }
-      ];
+      console.log('Loading events from Supabase...');
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('date', { ascending: false });
+
+      if (error) {
+        console.error('Error loading events:', error);
+        throw error;
+      }
+
+      // Transform snake_case to camelCase
+      return (data || []).map(event => ({
+        id: event.id,
+        dogId: event.dog_id,
+        type: event.type as 'medical' | 'location' | 'status' | 'note',
+        title: event.title,
+        description: event.description,
+        date: event.date,
+        createdBy: event.created_by,
+        isPrivate: event.is_private,
+        createdAt: event.created_at,
+      }));
     },
     enabled: !!user,
     staleTime: 30000,
