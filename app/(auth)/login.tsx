@@ -51,7 +51,7 @@ export default function LoginScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.logoContainer}>
           <Image 
-            source={{ uri: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80' }}
+            source={require('@/assets/images/straysafe_logo.png')}
             style={styles.logo}
           />
           <Text style={styles.title}>StraySafe</Text>
@@ -116,8 +116,8 @@ const styles = StyleSheet.create({
   logo: {
     width: 120,
     height: 120,
-    borderRadius: 60,
     marginBottom: 16,
+    resizeMode: 'contain',
   },
   title: {
     fontSize: 28,
