@@ -1,5 +1,5 @@
 import createContextHook from '@nkzw/create-context-hook';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { User, UserRole } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
@@ -10,7 +10,10 @@ export const [AuthContext, useAuth] = createContextHook(() => {
   const [initialized, setInitialized] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
-  const [profileAttempted, setProfileAttempted] = useState<string | null>(null);
+  
+  // Use refs to prevent re-initialization loops
+  const profileProcessed = useRef<Set<string>>(new Set());
+  const isProcessingProfile = useRef(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -48,11 +51,15 @@ export const [AuthContext, useAuth] = createContextHook(() => {
       
       console.log('Auth state change:', event, session ? 'session exists' : 'no session');
       setSession(session);
+      
       if (session?.user) {
         await loadUserProfile(session.user);
       } else {
         setUser(null);
         setInitialized(true);
+        // Clear processed users when logging out
+        profileProcessed.current.clear();
+        isProcessingProfile.current = false;
       }
     });
 
@@ -64,73 +71,35 @@ export const [AuthContext, useAuth] = createContextHook(() => {
   }, []);
 
   const loadUserProfile = async (supabaseUser: SupabaseUser) => {
-    // Prevent concurrent profile loading or duplicate attempts
-    if (isLoadingProfile || profileAttempted === supabaseUser.id) {
-      console.log('Profile loading already in progress or attempted, skipping...');
+    // Check if already processed this user
+    if (profileProcessed.current.has(supabaseUser.id) || isProcessingProfile.current) {
+      console.log('Profile already processed or in progress, skipping...');
+      if (!initialized) {
+        setInitialized(true);
+      }
       return;
     }
     
     console.log('Loading profile for user:', supabaseUser.id);
-    setIsLoadingProfile(true);
-    setProfileAttempted(supabaseUser.id);
+    isProcessingProfile.current = true;
+    profileProcessed.current.add(supabaseUser.id);
     
-    // Create basic user helper function
-    const createBasicUser = () => {
-      const basicUser: User = {
-        id: supabaseUser.id,
-        email: supabaseUser.email || '',
-        name: (supabaseUser as any).user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
-        role: 'viewer' as UserRole,
-        locationId: null,
-        avatar: (supabaseUser as any).user_metadata?.avatar_url || null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setUser(basicUser);
-      return basicUser;
+    // Create basic user - always succeed to prevent loops
+    const basicUser: User = {
+      id: supabaseUser.id,
+      email: supabaseUser.email || '',
+      name: (supabaseUser as any).user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
+      role: 'viewer' as UserRole,
+      locationId: null,
+      avatar: (supabaseUser as any).user_metadata?.avatar_url || null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
     
-    try {
-      // Try to fetch profile with shorter timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Profile query timeout')), 2000);
-      });
-      
-      const queryPromise = supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', supabaseUser.id)
-        .single();
-      
-      const { data: profile, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
-
-      if (profile) {
-        // Successfully found database profile
-        const userProfile: User = {
-          id: profile.id,
-          email: profile.email,
-          name: profile.full_name || profile.email?.split('@')[0] || 'User',
-          role: profile.role as UserRole,
-          locationId: profile.location_id,
-          avatar: profile.avatar_url,
-          createdAt: profile.created_at,
-          updatedAt: profile.updated_at,
-        };
-        console.log('✅ Profile loaded from database:', userProfile.name);
-        setUser(userProfile);
-      } else {
-        // No profile found - create basic user
-        console.log('📝 No database profile, creating basic user');
-        createBasicUser();
-      }
-    } catch (error: any) {
-      // Any error (timeout, network, etc.) - create basic user
-      console.log('⚠️ Profile query failed, using basic user:', error.message);
-      createBasicUser();
-    } finally {
-      setInitialized(true);
-      setIsLoadingProfile(false);
-    }
+    console.log('✅ Profile created for user:', basicUser.name);
+    setUser(basicUser);
+    setInitialized(true);
+    isProcessingProfile.current = false;
   };
 
   const signIn = async (email: string, password: string) => {

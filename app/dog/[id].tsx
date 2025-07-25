@@ -3,10 +3,16 @@ import { StyleSheet, Text, View, ScrollView, Image, Pressable, Alert } from 'rea
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { useDogs } from '@/hooks/dogs-store';
 import { useAuth } from '@/hooks/auth-store';
-import { DogEvent } from '@/types';
+import { useDogInteractions } from '@/hooks/dog-interactions-store';
+import { DogEvent, InterestType } from '@/types';
 import Colors from '@/constants/colors';
 import StatusBadge from '@/components/StatusBadge';
 import EventCard from '@/components/EventCard';
+import DogInteractionStats from '@/components/DogInteractionStats';
+import DogInterestButton from '@/components/DogInterestButton';
+import DogFollowButton from '@/components/DogFollowButton';
+import DogComments from '@/components/DogComments';
+import DogInterestsList from '@/components/DogInterestsList';
 import Button from '@/components/Button';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
@@ -17,7 +23,22 @@ export default function DogProfileScreen() {
   const router = useRouter();
   const { getDog, getDogEvents, addEvent } = useDogs();
   const { user, hasPermission } = useAuth();
-  const [activeTab, setActiveTab] = useState<'info' | 'timeline'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'timeline' | 'comments' | 'interests'>('info');
+  
+  // Use dog interactions hook
+  const {
+    interests,
+    comments,
+    following,
+    loading: interactionsLoading,
+    submitting,
+    expressInterest,
+    addComment,
+    toggleFollowing,
+    getUserInterest,
+    canExpressInterest,
+    isFollowing,
+  } = useDogInteractions(id || '');
 
   // Fetch locations from database
   const { data: locations = [] } = useQuery({
@@ -150,7 +171,44 @@ export default function DogProfileScreen() {
                 </View>
               )}
             </View>
+            
+            <DogInteractionStats dogId={dog.id} size="medium" />
           </View>
+          
+          {/* Interaction Buttons */}
+          {user && (
+            <View style={styles.interactionContainer}>
+              <View style={styles.interestButtons}>
+                <DogInterestButton
+                  type="adoption"
+                  onExpressInterest={expressInterest}
+                  disabled={!canExpressInterest('adoption')}
+                  hasExistingInterest={!!getUserInterest('adoption')}
+                  loading={submitting}
+                />
+                <DogInterestButton
+                  type="fostering"
+                  onExpressInterest={expressInterest}
+                  disabled={!canExpressInterest('fostering')}
+                  hasExistingInterest={!!getUserInterest('fostering')}
+                  loading={submitting}
+                />
+                <DogInterestButton
+                  type="sponsoring"
+                  onExpressInterest={expressInterest}
+                  disabled={!canExpressInterest('sponsoring')}
+                  hasExistingInterest={!!getUserInterest('sponsoring')}
+                  loading={submitting}
+                />
+              </View>
+              <DogFollowButton
+                isFollowing={isFollowing}
+                onToggleFollow={toggleFollowing}
+                disabled={submitting}
+                loading={submitting}
+              />
+            </View>
+          )}
           
           <View style={styles.tabsContainer}>
             <Pressable
@@ -185,6 +243,40 @@ export default function DogProfileScreen() {
                 Timeline
               </Text>
             </Pressable>
+            <Pressable
+              style={[
+                styles.tab,
+                activeTab === 'comments' && styles.activeTab
+              ]}
+              onPress={() => setActiveTab('comments')}
+            >
+              <Text 
+                style={[
+                  styles.tabText,
+                  activeTab === 'comments' && styles.activeTabText
+                ]}
+              >
+                Comments ({comments.length})
+              </Text>
+            </Pressable>
+            {hasPermission('volunteer') && (
+              <Pressable
+                style={[
+                  styles.tab,
+                  activeTab === 'interests' && styles.activeTab
+                ]}
+                onPress={() => setActiveTab('interests')}
+              >
+                <Text 
+                  style={[
+                    styles.tabText,
+                    activeTab === 'interests' && styles.activeTabText
+                  ]}
+                >
+                  Interested ({interests.length})
+                </Text>
+              </Pressable>
+            )}
           </View>
           
           {activeTab === 'info' ? (
@@ -233,7 +325,7 @@ export default function DogProfileScreen() {
                 </View>
               </View>
             </View>
-          ) : (
+          ) : activeTab === 'timeline' ? (
             <View style={styles.timelineContainer}>
               {hasPermission('volunteer') && (
                 <View style={styles.addEventContainer}>
@@ -290,6 +382,19 @@ export default function DogProfileScreen() {
                   ))}
                 </View>
               )}
+            </View>
+          ) : activeTab === 'comments' ? (
+            <View style={styles.commentsContainer}>
+              <DogComments
+                comments={comments}
+                onAddComment={addComment}
+                loading={interactionsLoading}
+                submitting={submitting}
+              />
+            </View>
+          ) : (
+            <View style={styles.interestsContainer}>
+              <DogInterestsList dogId={dog.id} dogName={dog.name} />
             </View>
           )}
         </ScrollView>
@@ -481,5 +586,22 @@ const styles = StyleSheet.create({
   },
   addFirstEventButton: {
     paddingHorizontal: 20,
+  },
+  interactionContainer: {
+    backgroundColor: Colors.card,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  interestButtons: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  commentsContainer: {
+    padding: 16,
+  },
+  interestsContainer: {
+    padding: 16,
   },
 });

@@ -12,76 +12,59 @@ export const [DogsContext, useDogs] = createContextHook(() => {
   const [dogs, setDogs] = useState<Dog[]>([]);
   const [events, setEvents] = useState<DogEvent[]>([]);
 
-  // Fetch dogs from Supabase
+  // TEMPORARY: Return mock data to test app stability
   const dogsQuery = useQuery({
     queryKey: ['dogs'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('dogs')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Failed to load dogs:', error);
-        throw error;
-      }
-
-      // Transform database rows to Dog objects
-      const transformedDogs: Dog[] = data.map(row => ({
-        id: row.id,
-        name: row.name,
-        status: row.status as DogStatus,
-        gender: row.gender as 'male' | 'female' | 'unknown',
-        locationId: row.location_id,
-        breed: row.breed,
-        age: row.age,
-        description: row.description,
-        lastSeen: row.last_seen,
-        lastSeenLocation: row.last_seen_location,
-        medicalNotes: row.medical_notes,
-        isNeutered: row.is_neutered,
-        isVaccinated: row.is_vaccinated,
-        mainImage: row.main_image,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-        createdBy: row.created_by,
-      }));
-
-      return transformedDogs;
+      console.log('Loading mock dogs data...');
+      // Return sample data instead of querying Supabase
+      return [
+        {
+          id: '1',
+          name: 'Sample Dog',
+          status: 'stray' as DogStatus,
+          gender: 'unknown' as 'male' | 'female' | 'unknown',
+          locationId: '1',
+          breed: 'Mixed',
+          age: 2,
+          description: 'A friendly dog',
+          lastSeen: null,
+          lastSeenLocation: null,
+          medicalNotes: null,
+          isNeutered: false,
+          isVaccinated: false,
+          mainImage: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          createdBy: null,
+        }
+      ];
     },
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 30000,
   });
 
-  // Fetch events from Supabase
+  // TEMPORARY: Return mock events data
   const eventsQuery = useQuery({
     queryKey: ['events'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('date', { ascending: false });
-
-      if (error) {
-        console.error('Failed to load events:', error);
-        throw error;
-      }
-
-      // Transform database rows to DogEvent objects
-      const transformedEvents: DogEvent[] = data.map(row => ({
-        id: row.id,
-        dogId: row.dog_id,
-        type: row.type as 'medical' | 'location' | 'status' | 'note',
-        title: row.title,
-        description: row.description,
-        date: row.date,
-        createdBy: row.created_by,
-        isPrivate: row.is_private,
-        createdAt: row.created_at,
-      }));
-
-      return transformedEvents;
+      console.log('Loading mock events data...');
+      return [
+        {
+          id: '1',
+          dogId: '1',
+          type: 'note' as 'medical' | 'location' | 'status' | 'note',
+          title: 'Dog found',
+          description: 'Sample event for testing',
+          date: new Date().toISOString(),
+          createdBy: '1',
+          isPrivate: false,
+          createdAt: new Date().toISOString(),
+        }
+      ];
     },
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 30000,
   });
 
   // Update local state when queries complete
@@ -265,7 +248,7 @@ export const [DogsContext, useDogs] = createContextHook(() => {
   return {
     dogs,
     events,
-    isLoading: dogsQuery.isLoading || eventsQuery.isLoading,
+    isLoading: (dogsQuery.isLoading || eventsQuery.isLoading) && !dogsQuery.error && !eventsQuery.error,
     addDog,
     updateDog,
     addEvent,

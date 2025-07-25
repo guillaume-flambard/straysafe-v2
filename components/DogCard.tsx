@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Dog } from '@/types';
 import Colors from '@/constants/colors';
 import StatusBadge from './StatusBadge';
+import DogInteractionStats from './DogInteractionStats';
 import { Ionicons } from '@expo/vector-icons';
 
 interface DogCardProps {
@@ -60,6 +61,8 @@ export default function DogCard({ dog }: DogCardProps) {
             </View>
           )}
         </View>
+        
+        <DogInteractionStats dogId={dog.id} size="small" />
       </View>
     </Pressable>
   );

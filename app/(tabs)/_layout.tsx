@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import React from "react";
+import React, { useMemo } from "react";
 import { useAuth } from "@/hooks/auth-store";
 import { useOnboarding } from "@/hooks/onboarding-store";
 import OnboardingScreen from "@/components/OnboardingScreen";
@@ -20,47 +20,56 @@ export default function TabLayout() {
 
   const { user, initialized } = authState;
 
+  // Memoize conditions to prevent unnecessary re-renders
+  const shouldRenderTabs = useMemo(() => {
+    return initialized && user;
+  }, [initialized, user]);
+
+  const shouldRenderOnboarding = useMemo(() => {
+    return shouldShowOnboarding && !onboardingLoading;
+  }, [shouldShowOnboarding, onboardingLoading]);
+
   console.log('TabLayout:', { initialized, user: user ? 'exists' : 'null', shouldShowOnboarding });
 
   // Don't render tabs if not authenticated or still loading
-  if (!initialized || !user) {
+  if (!shouldRenderTabs) {
     console.log('TabLayout: Not initialized or no user, returning null');
     return null;
   }
 
   // Show onboarding if user hasn't completed it
-  if (shouldShowOnboarding && !onboardingLoading) {
+  if (shouldRenderOnboarding) {
     console.log('TabLayout: Showing onboarding');
     return <OnboardingScreen onComplete={completeOnboarding} />;
   }
 
   console.log('TabLayout: Rendering tabs');
 
+  const screenOptions = useMemo(() => ({
+    tabBarActiveTintColor: Colors.primary,
+    tabBarInactiveTintColor: Colors.textLight,
+    tabBarStyle: {
+      borderTopColor: Colors.border,
+      paddingBottom: 12,
+      paddingTop: 8,
+      height: 80,
+    },
+    tabBarLabelStyle: {
+      fontSize: 12,
+      fontWeight: '500',
+      marginBottom: 8,
+    },
+    headerStyle: {
+      backgroundColor: Colors.card,
+    },
+    headerTintColor: Colors.text,
+    headerTitleStyle: {
+      fontWeight: '600',
+    },
+  }), []);
+
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textLight,
-        tabBarStyle: {
-          borderTopColor: Colors.border,
-          paddingBottom: 12,
-          paddingTop: 8,
-          height: 80,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
-          marginBottom: 8,
-        },
-        headerStyle: {
-          backgroundColor: Colors.card,
-        },
-        headerTintColor: Colors.text,
-        headerTitleStyle: {
-          fontWeight: '600',
-        },
-      }}
-    >
+    <Tabs screenOptions={screenOptions}>
       <Tabs.Screen
         name="index"
         options={{

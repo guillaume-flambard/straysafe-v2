@@ -52,3 +52,86 @@ export interface DogEvent {
   isPrivate: boolean;
   createdAt: string;
 }
+
+export type InterestType = 'adoption' | 'fostering' | 'sponsoring' | 'volunteering';
+
+export interface DogInterest {
+  id: string;
+  dogId: string;
+  userId: string;
+  type: InterestType;
+  message?: string;
+  status: 'pending' | 'approved' | 'rejected' | 'withdrawn';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DogComment {
+  id: string;
+  dogId: string;
+  userId: string;
+  content: string;
+  parentId?: string; // For replies
+  isModerated: boolean;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DogFollowing {
+  id: string;
+  dogId: string;
+  userId: string;
+  notificationsEnabled: boolean;
+  createdAt: string;
+}
+
+export interface DogCommentWithUser extends DogComment {
+  user: {
+    id: string;
+    name: string;
+    avatar?: string;
+    role: UserRole;
+  };
+  replies?: DogCommentWithUser[];
+}
+
+export interface Conversation {
+  id: string;
+  participants: string[]; // Array of user IDs
+  lastMessage?: string;
+  lastMessageAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  type: 'text' | 'image' | 'dog_reference';
+  dogId?: string; // For dog reference messages
+  isRead: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MessageWithUser extends Message {
+  sender: {
+    id: string;
+    name: string;
+    avatar?: string;
+    role: UserRole;
+  };
+}
+
+export interface ConversationWithDetails extends Conversation {
+  otherParticipant: {
+    id: string;
+    name: string;
+    avatar?: string;
+    role: UserRole;
+  };
+  unreadCount: number;
+}
