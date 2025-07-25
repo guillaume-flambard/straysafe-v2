@@ -258,7 +258,7 @@ export default function RegisterScreen() {
           
           <View style={styles.logoContainer}>
             <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80' }}
+              source={require('@/assets/images/straysafe_logo.png')}
               style={styles.logo}
             />
             <Text style={styles.title}>{isCompletingProfile ? 'Complete Your Profile' : 'Join StraySafe'}</Text>
@@ -405,8 +405,8 @@ const styles = StyleSheet.create({
   logo: {
     width: 80,
     height: 80,
-    borderRadius: 40,
     marginBottom: 12,
+    resizeMode: 'contain',
   },
   title: {
     fontSize: 24,

@@ -189,6 +189,14 @@ export default function ProfileScreen() {
 
   const renderProfileContent = () => (
     <ScrollView style={styles.scrollContent} contentContainerStyle={styles.contentContainer}>
+      <View style={styles.logoHeader}>
+        <Image 
+          source={require('@/assets/images/straysafe_logo.png')}
+          style={styles.headerLogo}
+        />
+        <Text style={styles.appName}>StraySafe</Text>
+      </View>
+      
       <View style={styles.header}>
         <Image 
           source={{ 
@@ -498,5 +506,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textLight,
     marginLeft: 6,
+  },
+  logoHeader: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    backgroundColor: Colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  headerLogo: {
+    width: 50,
+    height: 50,
+    marginBottom: 8,
+    resizeMode: 'contain',
+  },
+  appName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.primary,
   },
 });

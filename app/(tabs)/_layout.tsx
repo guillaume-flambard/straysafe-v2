@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 import React, { useMemo } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Image } from "react-native";
 import { useAuth } from "@/hooks/auth-store";
 import { useOnboarding } from "@/hooks/onboarding-store";
 import { useDogNotifications } from "@/hooks/dog-notifications-store";
@@ -61,6 +61,18 @@ export default function TabLayout() {
     );
   };
 
+  const CustomHeader = ({ title }: { title: string }) => {
+    return (
+      <View style={headerStyles.container}>
+        <Image 
+          source={require('@/assets/images/straysafe_logo.png')}
+          style={headerStyles.logo}
+        />
+        <Text style={headerStyles.title}>{title}</Text>
+      </View>
+    );
+  };
+
   const screenOptions = useMemo(() => ({
     tabBarActiveTintColor: Colors.primary,
     tabBarInactiveTintColor: Colors.textLight,
@@ -91,6 +103,7 @@ export default function TabLayout() {
         options={{
           title: "Dogs",
           tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color} />,
+          headerTitle: () => <CustomHeader title="StraySafe" />,
         }}
       />
       <Tabs.Screen
@@ -154,5 +167,24 @@ const badgeStyles = StyleSheet.create({
     color: 'white',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+});
+
+const headerStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logo: {
+    width: 28,
+    height: 28,
+    marginRight: 8,
+    resizeMode: 'contain',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: Colors.primary,
   },
 });
