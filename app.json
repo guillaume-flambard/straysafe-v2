@@ -28,6 +28,7 @@
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
       },
+      "edgeToEdgeEnabled": true,
       "package": "com.memo.straysafe",
       "permissions": [
         "android.permission.CAMERA",
