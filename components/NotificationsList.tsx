@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useDogNotifications, type DogNotification } from '@/hooks/dog-notifications-store';
-import { Colors } from '@/constants/Colors';
+import { Colors } from '@/constants/colors';
 
 interface NotificationItemProps {
   notification: DogNotification;

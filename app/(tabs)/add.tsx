@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, Alert, Image, Pressable, Platform, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Alert, Image, Pressable, Platform, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useDogs } from '@/hooks/dogs-store';
 import { useAuth } from '@/hooks/auth-store';
@@ -55,7 +55,7 @@ export default function AddDogScreen() {
   const [gender, setGender] = useState<DogGender>('unknown');
   const [isNeutered, setIsNeutered] = useState(false);
   const [isVaccinated, setIsVaccinated] = useState(false);
-  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [images, setImages] = useState<{uri: string; caption?: string}[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   // New state for improvements
@@ -104,30 +104,37 @@ export default function AddDogScreen() {
     }
   };
 
-  // Upload image to Supabase Storage using new service
-  const uploadImage = async (uri: string): Promise<string | null> => {
-    if (!user) return null;
+  // Upload multiple images to Supabase Storage
+  const uploadImages = async (imageList: {uri: string; caption?: string}[]): Promise<{url: string; caption?: string}[]> => {
+    if (!user || imageList.length === 0) return [];
     
     try {
       setIsUploadingImage(true);
+      const uploadedImages: {url: string; caption?: string}[] = [];
       
-      const result = await uploadDogImage(uri, user.id, {
-        compress: true,
-        maxWidth: 1200,
-        maxHeight: 1200,
-        quality: 0.9
-      });
-      
-      if (result.success && result.url) {
-        console.log('✅ Dog image uploaded successfully:', result.url);
-        return result.url;
-      } else {
-        console.error('❌ Dog image upload failed:', result.error);
-        return null;
+      for (const image of imageList) {
+        const result = await uploadDogImage(image.uri, user.id, {
+          compress: true,
+          maxWidth: 1200,
+          maxHeight: 1200,
+          quality: 0.9
+        });
+        
+        if (result.success && result.url) {
+          uploadedImages.push({
+            url: result.url,
+            caption: image.caption
+          });
+          console.log('✅ Dog image uploaded successfully:', result.url);
+        } else {
+          console.error('❌ Dog image upload failed:', result.error);
+        }
       }
+      
+      return uploadedImages;
     } catch (error) {
-      console.error('Failed to upload image:', error);
-      return null;
+      console.error('Failed to upload images:', error);
+      return [];
     } finally {
       setIsUploadingImage(false);
     }
@@ -146,12 +153,17 @@ export default function AddDogScreen() {
     return true;
   };
 
-  const pickImage = async () => {
+  const addImage = async () => {
+    if (images.length >= 5) {
+      showToast('Maximum 5 photos allowed', 'warning');
+      return;
+    }
+
     const hasPermission = await requestPermissions();
     if (!hasPermission) return;
 
     Alert.alert(
-      'Select Photo',
+      'Add Photo',
       'Choose how you want to add a photo',
       [
         { text: 'Cancel', style: 'cancel' },
@@ -177,7 +189,7 @@ export default function AddDogScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        setImageUri(result.assets[0].uri);
+        setImages(prev => [...prev, { uri: result.assets[0].uri }]);
       }
     } catch (error) {
       showToast('Failed to take photo. Please try again.', 'error');
@@ -191,14 +203,36 @@ export default function AddDogScreen() {
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
+        allowsMultipleSelection: true,
+        selectionLimit: 5 - images.length,
       });
 
-      if (!result.canceled && result.assets[0]) {
-        setImageUri(result.assets[0].uri);
+      if (!result.canceled && result.assets) {
+        const newImages = result.assets.map(asset => ({ uri: asset.uri }));
+        setImages(prev => [...prev, ...newImages]);
       }
     } catch (error) {
-      showToast('Failed to pick image. Please try again.', 'error');
+      showToast('Failed to pick images. Please try again.', 'error');
     }
+  };
+
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const moveImage = (fromIndex: number, toIndex: number) => {
+    setImages(prev => {
+      const newImages = [...prev];
+      const [moved] = newImages.splice(fromIndex, 1);
+      newImages.splice(toIndex, 0, moved);
+      return newImages;
+    });
+  };
+
+  const updateImageCaption = (index: number, caption: string) => {
+    setImages(prev => prev.map((img, i) => 
+      i === index ? { ...img, caption } : img
+    ));
   };
 
   // Real-time validation
@@ -261,13 +295,14 @@ export default function AddDogScreen() {
     // Show loading state
     showToast('Adding dog to database...', 'info');
     
-    let imageUrl = 'https://images.unsplash.com/photo-1561037404-61cd46aa615b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
+    let mainImageUrl = 'https://images.unsplash.com/photo-1561037404-61cd46aa615b?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80';
+    let uploadedImages: {url: string; caption?: string}[] = [];
     
-    // Upload image if provided
-    if (imageUri) {
-      const uploadedUrl = await uploadImage(imageUri);
-      if (uploadedUrl) {
-        imageUrl = uploadedUrl;
+    // Upload images if provided
+    if (images.length > 0) {
+      uploadedImages = await uploadImages(images);
+      if (uploadedImages.length > 0) {
+        mainImageUrl = uploadedImages[0].url;
       } else {
         showToast('Image upload failed, using default image.', 'warning');
       }
@@ -286,7 +321,7 @@ export default function AddDogScreen() {
       isNeutered,
       isVaccinated,
       locationId: selectedLocationId,
-      mainImage: imageUrl,
+      mainImage: mainImageUrl,
     };
     
     // Add GPS coordinates to description if available (prioritize map selection)
@@ -299,6 +334,27 @@ export default function AddDogScreen() {
     
     try {
       const dog = await addDog(newDog);
+      
+      // Save additional images to dog_images table
+      if (uploadedImages.length > 0) {
+        for (let i = 0; i < uploadedImages.length; i++) {
+          const image = uploadedImages[i];
+          const { error: imageError } = await supabase
+            .from('dog_images')
+            .insert({
+              dog_id: dog.id,
+              image_url: image.url,
+              image_order: i,
+              caption: image.caption,
+              is_main: i === 0, // First image is main
+              uploaded_by: user?.id,
+            });
+          
+          if (imageError) {
+            console.error('Error saving dog image:', imageError);
+          }
+        }
+      }
       
       showToast(`${name} has been added successfully! 🎉`, 'success');
       
@@ -323,7 +379,7 @@ export default function AddDogScreen() {
     setGender('unknown');
     setIsNeutered(false);
     setIsVaccinated(false);
-    setImageUri(null);
+    setImages([]);
     setSelectedLocationId(user?.locationId || '');
     setCurrentLocation(null);
     setSelectedMapLocation(null);
@@ -621,32 +677,54 @@ export default function AddDogScreen() {
       <Text style={styles.title}>Add New Dog</Text>
       
       <View style={styles.imageSection}>
-        <Pressable style={styles.imagePlaceholder} onPress={pickImage}>
-          {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.selectedImage} />
-          ) : (
-            <>
-              <Ionicons name="camera" size={40} color={Colors.placeholder} />
-              <Text style={styles.imagePlaceholderText}>Add Photo</Text>
-              <Text style={styles.imagePlaceholderSubtext}>Tap to take photo or select from library</Text>
-            </>
-          )}
-          {isUploadingImage && (
-            <View style={styles.uploadingOverlay}>
-              <ActivityIndicator size="large" color={Colors.primary} />
-              <Text style={styles.uploadingText}>Uploading...</Text>
+        <Text style={styles.sectionLabel}>Photos ({images.length}/5)</Text>
+        
+        {/* Images Gallery */}
+        <ScrollView horizontal style={styles.imageGallery} showsHorizontalScrollIndicator={false}>
+          {images.map((image, index) => (
+            <View key={index} style={styles.imageContainer}>
+              <Image source={{ uri: image.uri }} style={styles.galleryImage} />
+              <View style={styles.imageOverlay}>
+                <TouchableOpacity
+                  style={styles.removeImageButton}
+                  onPress={() => removeImage(index)}
+                >
+                  <Ionicons name="close" size={16} color="white" />
+                </TouchableOpacity>
+                {index === 0 && (
+                  <View style={styles.mainImageBadge}>
+                    <Text style={styles.mainImageText}>MAIN</Text>
+                  </View>
+                )}
+              </View>
             </View>
+          ))}
+          
+          {/* Add Photo Button */}
+          {images.length < 5 && (
+            <Pressable style={styles.addPhotoButton} onPress={addImage}>
+              <Ionicons name="camera" size={30} color={Colors.placeholder} />
+              <Text style={styles.addPhotoText}>Add Photo</Text>
+            </Pressable>
           )}
-        </Pressable>
-        {imageUri && !isUploadingImage && (
-          <Button
-            title="Change Photo"
-            onPress={pickImage}
-            variant="outline"
-            size="small"
-            style={styles.changePhotoButton}
-            leftIcon={<Ionicons name="image" size={16} color={Colors.primary} />}
-          />
+        </ScrollView>
+        
+        {/* Upload Progress */}
+        {isUploadingImage && (
+          <View style={styles.uploadProgress}>
+            <ActivityIndicator size="small" color={Colors.primary} />
+            <Text style={styles.uploadingText}>Uploading images...</Text>
+          </View>
+        )}
+        
+        {images.length === 0 && (
+          <Pressable style={styles.imagePlaceholder} onPress={addImage}>
+            <Ionicons name="camera" size={40} color={Colors.placeholder} />
+            <Text style={styles.imagePlaceholderText}>Add Photos</Text>
+            <Text style={styles.imagePlaceholderSubtext}>
+              Add up to 5 photos. First photo will be the main image.
+            </Text>
+          </Pressable>
         )}
       </View>
       
@@ -814,8 +892,80 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   imageSection: {
-    alignItems: 'center',
     marginBottom: 20,
+  },
+  imageGallery: {
+    marginVertical: 10,
+  },
+  imageContainer: {
+    width: 120,
+    height: 120,
+    marginRight: 12,
+    borderRadius: 8,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  galleryImage: {
+    width: '100%',
+    height: '100%',
+  },
+  imageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'space-between',
+    padding: 8,
+  },
+  removeImageButton: {
+    alignSelf: 'flex-end',
+    backgroundColor: 'rgba(255, 0, 0, 0.8)',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mainImageBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  mainImageText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  addPhotoButton: {
+    width: 120,
+    height: 120,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    borderStyle: 'dashed',
+    backgroundColor: Colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  addPhotoText: {
+    fontSize: 12,
+    color: Colors.placeholder,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  uploadProgress: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 8,
+    backgroundColor: Colors.background,
+    borderRadius: 8,
+    marginTop: 8,
   },
   imagePlaceholder: {
     width: 150,

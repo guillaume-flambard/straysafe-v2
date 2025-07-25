@@ -1,7 +1,10 @@
 import { Tabs } from "expo-router";
 import React, { useMemo } from "react";
+import { View, Text, StyleSheet } from "react-native";
 import { useAuth } from "@/hooks/auth-store";
 import { useOnboarding } from "@/hooks/onboarding-store";
+import { useDogNotifications } from "@/hooks/dog-notifications-store";
+import { useAdminNotifications } from "@/hooks/admin-notifications-store";
 import OnboardingScreen from "@/components/OnboardingScreen";
 import Colors from "@/constants/colors";
 import { Ionicons } from '@expo/vector-icons';
@@ -9,6 +12,8 @@ import { Ionicons } from '@expo/vector-icons';
 export default function TabLayout() {
   const authState = useAuth();
   const { shouldShowOnboarding, completeOnboarding, loading: onboardingLoading } = useOnboarding();
+  const { unreadCount: userNotifications } = useDogNotifications();
+  const { unreadCount: adminNotifications } = useAdminNotifications();
 
   console.log('TabLayout: authState', authState ? 'exists' : 'null');
 
@@ -45,6 +50,17 @@ export default function TabLayout() {
 
   console.log('TabLayout: Rendering tabs');
 
+  const totalNotifications = userNotifications + adminNotifications;
+
+  const NotificationBadge = ({ count }: { count: number }) => {
+    if (count === 0) return null;
+    return (
+      <View style={badgeStyles.badge}>
+        <Text style={badgeStyles.badgeText}>{count > 99 ? '99+' : count}</Text>
+      </View>
+    );
+  };
+
   const screenOptions = useMemo(() => ({
     tabBarActiveTintColor: Colors.primary,
     tabBarInactiveTintColor: Colors.textLight,
@@ -56,7 +72,7 @@ export default function TabLayout() {
     },
     tabBarLabelStyle: {
       fontSize: 12,
-      fontWeight: '500',
+      fontWeight: '500' as const,
       marginBottom: 8,
     },
     headerStyle: {
@@ -64,7 +80,7 @@ export default function TabLayout() {
     },
     headerTintColor: Colors.text,
     headerTitleStyle: {
-      fontWeight: '600',
+      fontWeight: '600' as const,
     },
   }), []);
 
@@ -99,6 +115,18 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="notifications"
+        options={{
+          title: "Notifications",
+          tabBarIcon: ({ color }) => (
+            <View style={{ position: 'relative' }}>
+              <Ionicons name="notifications" size={24} color={color} />
+              <NotificationBadge count={totalNotifications} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
@@ -108,3 +136,23 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const badgeStyles = StyleSheet.create({
+  badge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: '#FF4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+});

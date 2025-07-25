@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Image, ScrollView, Alert, Pressable, ActivityIndicator } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/hooks/auth-store';
+import { useDogFavorites } from '@/hooks/dog-favorites-store';
 import { supabase } from '@/lib/supabase';
 import { resetOnboardingForUser } from '@/utils/onboarding';
 import Colors from '@/constants/colors';
 import Button from '@/components/Button';
 import { Ionicons } from '@expo/vector-icons';
 import { showToast, ToastComponent } from '@/utils/toast';
+import { FavoriteDogsSection } from '@/components/FavoriteDogsSection';
+import { MyDogsSection } from '@/components/MyDogsSection';
 
 interface UserProfile {
   id: string;
@@ -23,8 +26,10 @@ interface UserProfile {
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const router = useRouter();
+  const { favorites } = useDogFavorites();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'profile' | 'favorites' | 'mydogs'>('profile');
   
   if (!user) return null;
 
@@ -153,32 +158,61 @@ export default function ProfileScreen() {
     );
   }
 
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-          <View style={styles.header}>
-            <Image 
-              source={{ 
-                uri: profile.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80' 
-              }} 
-              style={styles.avatar} 
-            />
-            <View style={styles.userInfo}>
-              <Text style={styles.name}>{profile.full_name || 'No name set'}</Text>
-              <Text style={styles.email}>{profile.email}</Text>
-              {profile.bio && (
-                <Text style={styles.bio} numberOfLines={2}>{profile.bio}</Text>
-              )}
-              {profile.location && (
-                <View style={styles.locationDisplay}>
-                  <Ionicons name="location" size={14} color={Colors.textLight} />
-                  <Text style={styles.locationDisplayText}>{profile.location}</Text>
-                </View>
-              )}
-              <View style={styles.roleBadge}>
-                <Text style={styles.roleText}>Member</Text>
-              </View>
+  const renderTabBar = () => (
+    <View style={styles.tabBar}>
+      <Pressable
+        style={[styles.tab, activeTab === 'profile' && styles.activeTab]}
+        onPress={() => setActiveTab('profile')}
+      >
+        <Text style={[styles.tabText, activeTab === 'profile' && styles.activeTabText]}>
+          Profile
+        </Text>
+      </Pressable>
+      <Pressable
+        style={[styles.tab, activeTab === 'favorites' && styles.activeTab]}
+        onPress={() => setActiveTab('favorites')}
+      >
+        <Text style={[styles.tabText, activeTab === 'favorites' && styles.activeTabText]}>
+          Favorites ({favorites.length})
+        </Text>
+      </Pressable>
+      <Pressable
+        style={[styles.tab, activeTab === 'mydogs' && styles.activeTab]}
+        onPress={() => setActiveTab('mydogs')}
+      >
+        <Text style={[styles.tabText, activeTab === 'mydogs' && styles.activeTabText]}>
+          My Dogs
+        </Text>
+      </Pressable>
+    </View>
+  );
+
+  const renderProfileContent = () => (
+    <ScrollView style={styles.scrollContent} contentContainerStyle={styles.contentContainer}>
+      <View style={styles.header}>
+        <Image 
+          source={{ 
+            uri: profile.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80' 
+          }} 
+          style={styles.avatar} 
+        />
+        <View style={styles.userInfo}>
+          <Text style={styles.name}>{profile.full_name || 'No name set'}</Text>
+          <Text style={styles.email}>{profile.email}</Text>
+          {profile.bio && (
+            <Text style={styles.bio} numberOfLines={2}>{profile.bio}</Text>
+          )}
+          {profile.location && (
+            <View style={styles.locationDisplay}>
+              <Ionicons name="location" size={14} color={Colors.textLight} />
+              <Text style={styles.locationDisplayText}>{profile.location}</Text>
             </View>
+          )}
+          <View style={styles.roleBadge}>
+            <Text style={styles.roleText}>Member</Text>
           </View>
+        </View>
+      </View>
       
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>
@@ -263,12 +297,59 @@ export default function ProfileScreen() {
       <ToastComponent />
     </ScrollView>
   );
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'profile':
+        return renderProfileContent();
+      case 'favorites':
+        return <FavoriteDogsSection />;
+      case 'mydogs':
+        return <MyDogsSection />;
+      default:
+        return renderProfileContent();
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      {renderTabBar()}
+      {renderContent()}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  activeTab: {
+    borderBottomWidth: 2,
+    borderBottomColor: Colors.primary,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.textLight,
+  },
+  activeTabText: {
+    color: Colors.primary,
+    fontWeight: '600',
+  },
+  scrollContent: {
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,

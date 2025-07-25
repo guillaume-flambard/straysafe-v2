@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useModeration, type ContentReport } from '@/hooks/moderation-store';
-import { Colors } from '@/constants/Colors';
+import { Colors } from '@/constants/colors';
 
 interface ReportItemProps {
   report: ContentReport;

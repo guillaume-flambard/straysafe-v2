@@ -11,28 +11,28 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useDogFavorites, type FavoriteDog } from '@/hooks/dog-favorites-store';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/auth-store';
+import { Dog } from '@/types';
 import { Colors } from '@/constants/colors';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 48) / 2; // Account for padding and gap
 
-interface FavoriteDogCardProps {
-  dog: FavoriteDog;
-  onRemoveFromFavorites: (dogId: string) => void;
+interface MyDogCardProps {
+  dog: Dog;
+  onEdit: (dogId: string) => void;
 }
 
-const FavoriteDogCard: React.FC<FavoriteDogCardProps> = ({
-  dog,
-  onRemoveFromFavorites,
-}) => {
+const MyDogCard: React.FC<MyDogCardProps> = ({ dog, onEdit }) => {
   const handlePress = () => {
     router.push(`/dog/${dog.id}`);
   };
 
-  const handleRemoveFavorite = (e: any) => {
+  const handleEdit = (e: any) => {
     e.stopPropagation();
-    onRemoveFromFavorites(dog.id);
+    onEdit(dog.id);
   };
 
   const getStatusColor = (status: string) => {
@@ -73,8 +73,8 @@ const FavoriteDogCard: React.FC<FavoriteDogCardProps> = ({
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(dog.status) }]}>
           <Text style={styles.statusText}>{dog.status}</Text>
         </View>
-        <TouchableOpacity style={styles.favoriteButton} onPress={handleRemoveFavorite}>
-          <Ionicons name="heart" size={20} color="#E91E63" />
+        <TouchableOpacity style={styles.editButton} onPress={handleEdit}>
+          <Ionicons name="pencil" size={16} color={Colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -104,45 +104,85 @@ const FavoriteDogCard: React.FC<FavoriteDogCardProps> = ({
           </Text>
         )}
 
-        <View style={styles.statsRow}>
-          <View style={styles.statItem}>
-            <Ionicons name="heart-outline" size={14} color={Colors.textSecondary} />
-            <Text style={styles.statText}>{dog.totalInterests}</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Ionicons name="chatbubble-outline" size={14} color={Colors.textSecondary} />
-            <Text style={styles.statText}>{dog.commentCount}</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Ionicons name="people-outline" size={14} color={Colors.textSecondary} />
-            <Text style={styles.statText}>{dog.followingCount}</Text>
-          </View>
-        </View>
-
-        <Text style={styles.favoritedDate}>
-          Favorited {formatTime(dog.favoritedAt)}
+        <Text style={styles.createdDate}>
+          Created {formatTime(dog.createdAt)}
         </Text>
       </View>
     </TouchableOpacity>
   );
 };
 
-export const FavoriteDogsSection: React.FC = () => {
-  const {
-    favorites,
-    isLoading,
-    removeFromFavorites,
-    refresh,
-  } = useDogFavorites();
+export const MyDogsSection: React.FC = () => {
+  const { user } = useAuth();
 
-  if (favorites.length === 0 && !isLoading) {
+  const { data: myDogs = [], isLoading, refetch } = useQuery({
+    queryKey: ['my-dogs', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('dogs')
+        .select('*')
+        .eq('created_by', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching my dogs:', error);
+        throw error;
+      }
+
+      return (data || []).map(dog => ({
+        id: dog.id,
+        name: dog.name,
+        status: dog.status,
+        gender: dog.gender,
+        locationId: dog.location_id,
+        breed: dog.breed,
+        age: dog.age,
+        description: dog.description,
+        lastSeen: dog.last_seen,
+        lastSeenLocation: dog.last_seen_location,
+        medicalNotes: dog.medical_notes,
+        isNeutered: dog.is_neutered,
+        isVaccinated: dog.is_vaccinated,
+        mainImage: dog.main_image,
+        createdAt: dog.created_at,
+        updatedAt: dog.updated_at,
+        createdBy: dog.created_by,
+      })) as Dog[];
+    },
+    enabled: !!user,
+    staleTime: 30000,
+  });
+
+  const handleEdit = (dogId: string) => {
+    router.push(`/edit-dog/${dogId}`);
+  };
+
+  const handleAddNew = () => {
+    router.push('/add');
+  };
+
+  if (!user) {
+    return (
+      <View style={styles.noAccessContainer}>
+        <Text style={styles.noAccessText}>Please log in to view your dogs</Text>
+      </View>
+    );
+  }
+
+  if (myDogs.length === 0 && !isLoading) {
     return (
       <View style={styles.emptyState}>
-        <Ionicons name="heart-outline" size={48} color={Colors.textSecondary} />
-        <Text style={styles.emptyStateText}>No favorite dogs yet</Text>
+        <Ionicons name="paw-outline" size={48} color={Colors.textSecondary} />
+        <Text style={styles.emptyStateText}>No dogs posted yet</Text>
         <Text style={styles.emptyStateSubtext}>
-          Tap the heart icon on dog profiles to add them to your favorites
+          Start by adding a dog to help the community
         </Text>
+        <TouchableOpacity style={styles.addButton} onPress={handleAddNew}>
+          <Ionicons name="add" size={20} color="white" />
+          <Text style={styles.addButtonText}>Add First Dog</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -151,24 +191,28 @@ export const FavoriteDogsSection: React.FC = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>
-          Favorite Dogs ({favorites.length})
+          My Dogs ({myDogs.length})
         </Text>
+        <TouchableOpacity style={styles.addButton} onPress={handleAddNew}>
+          <Ionicons name="add" size={16} color="white" />
+          <Text style={styles.addButtonText}>Add Dog</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refresh} />
+          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
         }
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.grid}>
-          {favorites.map((dog) => (
-            <FavoriteDogCard
+          {myDogs.map((dog) => (
+            <MyDogCard
               key={dog.id}
               dog={dog}
-              onRemoveFromFavorites={removeFromFavorites}
+              onEdit={handleEdit}
             />
           ))}
         </View>
@@ -183,6 +227,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
@@ -192,6 +239,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: Colors.text,
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  addButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 4,
   },
   scrollView: {
     flex: 1,
@@ -236,10 +297,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textTransform: 'uppercase',
   },
-  favoriteButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  editButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -276,22 +337,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     marginBottom: 8,
   },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  statText: {
-    fontSize: 11,
-    color: Colors.textSecondary,
-    marginLeft: 4,
-  },
-  favoritedDate: {
+  createdDate: {
     fontSize: 10,
     color: Colors.textSecondary,
     fontStyle: 'italic',
@@ -316,5 +362,18 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
+    marginBottom: 24,
+  },
+  noAccessContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    backgroundColor: Colors.background,
+  },
+  noAccessText: {
+    fontSize: 16,
+    color: Colors.textSecondary,
+    textAlign: 'center',
   },
 });

@@ -115,16 +115,45 @@ export default function DogProfileScreen() {
       <Stack.Screen 
         options={{
           title: dog.name,
-          headerRight: () => (
-            hasPermission('volunteer') ? (
-              <Pressable 
-                style={styles.editButton}
-                onPress={() => Alert.alert('Edit', 'Edit functionality would be implemented here')}
-              >
-                <Ionicons name="pencil" size={20} color={Colors.primary} />
-              </Pressable>
-            ) : null
-          ),
+          headerRight: () => {
+            const isOwner = user?.id === dog.createdBy;
+            const canEdit = hasPermission('volunteer') || isOwner;
+            
+            return canEdit ? (
+              <View style={styles.headerActions}>
+                <Pressable 
+                  style={styles.editButton}
+                  onPress={() => router.push(`/edit-dog/${dog.id}`)}
+                >
+                  <Ionicons name="pencil" size={20} color={Colors.primary} />
+                </Pressable>
+                {isOwner && (
+                  <Pressable 
+                    style={[styles.editButton, { marginLeft: 8 }]}
+                    onPress={() => {
+                      Alert.alert(
+                        'Delete Dog',
+                        'Are you sure you want to delete this dog? This action cannot be undone.',
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          { 
+                            text: 'Delete', 
+                            style: 'destructive',
+                            onPress: () => {
+                              // TODO: Implement delete functionality
+                              Alert.alert('Feature', 'Delete functionality will be implemented');
+                            }
+                          }
+                        ]
+                      );
+                    }}
+                  >
+                    <Ionicons name="trash" size={20} color={Colors.danger} />
+                  </Pressable>
+                )}
+              </View>
+            ) : null;
+          },
         }} 
       />
       
@@ -603,5 +632,12 @@ const styles = StyleSheet.create({
   },
   interestsContainer: {
     padding: 16,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  editButton: {
+    padding: 4,
   },
 });

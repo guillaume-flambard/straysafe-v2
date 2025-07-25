@@ -6,6 +6,7 @@ export const Colors = {
   background: "#f9f9f9",
   card: "#ffffff",
   text: "#333333",
+  textSecondary: "#7f8c8d",
   textLight: "#7f8c8d",
   success: "#2ecc71",
   danger: "#e74c3c",
