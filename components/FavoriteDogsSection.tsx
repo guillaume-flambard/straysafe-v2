@@ -2,10 +2,8 @@ import React from 'react';
 import {
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   StyleSheet,
-  RefreshControl,
   Image,
   Dimensions,
 } from 'react-native';
@@ -132,7 +130,6 @@ export const FavoriteDogsSection: React.FC = () => {
     favorites,
     isLoading,
     removeFromFavorites,
-    refresh,
   } = useDogFavorites();
 
   if (favorites.length === 0 && !isLoading) {
@@ -155,24 +152,15 @@ export const FavoriteDogsSection: React.FC = () => {
         </Text>
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refresh} />
-        }
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.grid}>
-          {favorites.map((dog) => (
-            <FavoriteDogCard
-              key={dog.id}
-              dog={dog}
-              onRemoveFromFavorites={removeFromFavorites}
-            />
-          ))}
-        </View>
-      </ScrollView>
+      <View style={styles.grid}>
+        {favorites.map((dog) => (
+          <FavoriteDogCard
+            key={dog.id}
+            dog={dog}
+            onRemoveFromFavorites={removeFromFavorites}
+          />
+        ))}
+      </View>
     </View>
   );
 };

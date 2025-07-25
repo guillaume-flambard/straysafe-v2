@@ -2,10 +2,8 @@ import React from 'react';
 import {
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   StyleSheet,
-  RefreshControl,
   Image,
   Dimensions,
 } from 'react-native';
@@ -115,7 +113,7 @@ const MyDogCard: React.FC<MyDogCardProps> = ({ dog, onEdit }) => {
 export const MyDogsSection: React.FC = () => {
   const { user } = useAuth();
 
-  const { data: myDogs = [], isLoading, refetch } = useQuery({
+  const { data: myDogs = [], isLoading } = useQuery({
     queryKey: ['my-dogs', user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -199,24 +197,15 @@ export const MyDogsSection: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
-        }
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.grid}>
-          {myDogs.map((dog) => (
-            <MyDogCard
-              key={dog.id}
-              dog={dog}
-              onEdit={handleEdit}
-            />
-          ))}
-        </View>
-      </ScrollView>
+      <View style={styles.grid}>
+        {myDogs.map((dog) => (
+          <MyDogCard
+            key={dog.id}
+            dog={dog}
+            onEdit={handleEdit}
+          />
+        ))}
+      </View>
     </View>
   );
 };
